@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentvax"
+version = "0.1.0"
+description = "AgentVax: an AI wallet agent whose payments are authorised by a policy wallet contract."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "web3>=7.0",
+    "eth-account>=0.13",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+    "numpy>=1.26",
+    "flwr>=1.10",
+    "python-dotenv>=1.0",
+    "eth-keys>=0.5",
+    "eth-abi>=5.0",
+    "eth-utils>=4.0",
+    "cryptography>=42",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["agentvax*"]
+
+[tool.setuptools.package-data]
+"agentvax" = ["profiles/*.json", "data/*.json"]
+"agentvax.api" = ["static/*", "data/*.json"]
+"agentvax.detector" = ["data/*.json"]
+"agentvax.fed" = ["data/*.json"]
+"agentvax.llm" = ["*.json"]
+"agentvax.harness" = ["data/*.json"]
+"agentvax.eval" = ["suites/*", "data/*.json"]
+"agentvax.evidence" = ["data/*.json"]
