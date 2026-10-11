@@ -1,0 +1,29 @@
+{
+  "name": "demo",
+  "mandate": {
+    "reserve": 600000000,
+    "c1": 500000000,
+    "d1": 1000000000,
+    "c2": 2000000000,
+    "delay": 60,
+    "loosening_delay": 300,
+    "pressure_hold": 120,
+    "refill_period": 600,
+    "horizon": 2592000,
+    "expiry_after": 7776000,
+    "allowance_max": 10,
+    "channel_profile": 31,
+    "charge_external": 2,
+    "charge_over_half_d": 2,
+    "charge_anomaly": 3,
+    "charge_first_payment": 3,
+    "charge_partial_capsule": 5,
+    "fee_top_up_cap": 2000000000000000,
+    "fee_daily_budget": 6000000000000000,
+    "agent_balance_floor": 4000000000000000,
+    "native_reserve": 2000000000000000
+  },
+  "guardian": {
+    "attestation_lifetime": 300
+  }
+}
