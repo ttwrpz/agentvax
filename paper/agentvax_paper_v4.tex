@@ -1,0 +1,1115 @@
+% AgentVax technical paper, version 4 (owner-pressure safeguards)
+%
+% Clean version:        pdflatex agentvax_paper_v4.tex   (run twice)
+% Highlighted version:  pdflatex -jobname=agentvax_paper_v4_highlighted "\def\dohighlight{1}\input{agentvax_paper_v4.tex}"
+%                       (or uncomment the next line)
+% \def\dohighlight{1}
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage[scaled=0.9]{helvet}
+\usepackage[a4paper,top=19mm,bottom=22mm,left=16mm,right=16mm,columnsep=7mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{booktabs,tabularx,array}
+\usepackage{stfloats}
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{balance}
+
+% ---- Yellow highlighter that breaks across lines (no extra package needed) ----
+\definecolor{hlyellow}{HTML}{FFF14D}
+\makeatletter
+\newcommand{\uniq@box}[1]{\begingroup\setlength{\fboxsep}{0pt}%
+  \colorbox{hlyellow}{\rule[-0.25em]{0pt}{1.05em}#1}\endgroup}
+\newcommand{\uniq@gap}{{\color{hlyellow}\leaders\hrule height 0.8em depth 0.25em
+  \hskip \fontdimen2\font plus \fontdimen3\font minus \fontdimen4\font}}
+\def\uniq@scan#1 #2\uniq@end{%
+  \if\relax\detokenize{#1}\relax\else\uniq@box{#1}\fi
+  \if\relax\detokenize{#2}\relax\expandafter\@gobble\else\expandafter\@firstofone\fi
+  {\uniq@gap\uniq@scan#2\uniq@end}}
+\ifdefined\dohighlight
+  \newcommand{\uniq}[1]{\leavevmode\uniq@scan#1 \uniq@end}
+\else
+  \newcommand{\uniq}[1]{#1}
+\fi
+\makeatother
+
+% Headings
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\itshape}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{9pt plus 2pt minus 1pt}{4pt}
+\titlespacing*{\subsection}{0pt}{7pt plus 2pt minus 1pt}{3pt}
+\setlist{nosep,leftmargin=*,topsep=2pt}
+
+% Table helpers: ragged-right wrapping columns so text never overflows a cell
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\newcommand{\tblfont}{\footnotesize}
+
+\newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
+
+\emergencystretch=2em
+\sloppy
+\raggedbottom
+
+\title{\vspace{-6mm}\textbf{AgentVax: A Self-Immunising Wallet Agent\\
+with Adaptive Financial Autonomy}}
+\author{%
+\todo{Author 1}, \todo{Author 2}, \todo{Author 3}\\[2pt]
+\small Team \todo{team name}, \todo{university, country}\\
+\small 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F: Agent Wallet\\
+\small Contact: \todo{email}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+AI agents that hold wallets can be talked into spending money they should not spend, and
+several have already lost real funds. Existing agent wallets ask what the agent is
+allowed to do and enforce it with caps and allowlists.
+\uniq{AgentVax asks a second question: how much of its authorised power should the agent
+exercise on its own right now?}
+The owner states a mission in plain language; it becomes a signed mandate on chain that
+the model cannot change. Before every payment the wallet contract checks
+\uniq{three things: is it allowed, can the owner afford it, and is it safe right now,}
+and
+\uniq{a daily caution allowance limits how many borderline payments may pass without the
+owner being asked.}
+\uniq{When one wallet is attacked it publishes an immunity capsule, a structured alert
+with no private data that describes the attack by its features, so other wallets
+recognise reworded versions and become more cautious at once.}
+\uniq{A detector trained jointly with federated learning then gives lasting protection
+without any wallet sharing its data.}
+\uniq{Learning and shared intelligence can only reduce autonomy. Only the owner can
+extend authority, and only after a delay chosen in advance, so that an owner under
+pressure cannot be rushed into a mistake.}
+The paper specifies the architecture, the algorithms, the security design and a
+reproducible evaluation protocol whose headline measure is the share of legitimate tasks
+completed without the owner, with zero policy violations. It is a design and protocol
+document; measured results are reported in the accompanying execution evidence.
+\end{abstract}
+
+\vspace{2pt}
+\noindent\textbf{\textit{Keywords---}}agent wallet, adaptive autonomy, prompt injection,
+payment fraud, threat sharing, federated learning.
+
+\ifdefined\dohighlight
+\smallskip\noindent{\footnotesize\textbf{Reading note.} \uniq{Yellow highlight} marks what
+is specific to AgentVax. Unhighlighted features, such as spending caps, allowlists and
+session keys, are common to agent wallets.\par}
+\fi
+
+% ---------------------------------------------------------------------------
+\section{Introduction}
+
+The theme of the International Track is ``AI as a Financial Participant'': an agent that
+completes real tasks in a financial scenario~\cite{rules}. Topic~F asks for a wallet agent
+that autonomously performs asset management, transaction execution and risk control on
+chain. Entries are scored on task completion (40\%), security and compliance (30\%) and
+innovation and interaction (30\%), with a 0--5 point bonus for on-chain
+exploration~\cite{rules}.
+
+A wallet agent differs from a chatbot in one respect that matters for security: its output
+moves value. A language model reads text from many sources and cannot reliably tell data
+from instructions~\cite{greshake,owasp}. Table~\ref{tab:incidents} lists four public
+incidents in which an AI agent with a wallet sent funds it should not have sent. In the
+most recent, an attacker posted an instruction in Morse code; one model translated it and
+a wallet bot executed the result~\cite{oecdgrok,giskard}. In the laboratory, Patlan et
+al.\ showed that planting false entries in a wallet agent's memory is more effective
+still~\cite{patlan}. Regulators have named the same risk for agent-initiated
+payments~\cite{imf}. An agent that pays invoices also inherits the oldest payment fraud
+there is: a message that appears to come from a known supplier and asks for payment to a
+new account. That fraud usually works by rushing a person, not by fooling a machine.
+
+\begin{table*}[t]
+\caption{Reported incidents involving AI agents that control wallets.}
+\label{tab:incidents}
+\tblfont
+\begin{tabularx}{\textwidth}{@{}P{0.09\textwidth} P{0.13\textwidth} L P{0.17\textwidth} P{0.19\textwidth}@{}}
+\toprule
+\textbf{Date} & \textbf{Agent} & \textbf{What happened} & \textbf{Reported loss} & \textbf{Kind of failure} \\
+\midrule
+Nov.\ 2024 & Freysa~\cite{freysa} & A player persuaded the agent that its transfer-approval function handled incoming funds; it released the prize pool. This was a designed game. & About \$47,000 & Persuasion of the model \\
+Mar.\ 2025 & AIXBT~\cite{aixbt} & An attacker entered the control dashboard and queued two prompts instructing the agent to transfer funds. & 55.5 ETH, about \$106,000 & Injected instructions after a dashboard breach \\
+Feb.\ 2026 & Lobstar Wilde~\cite{lobstar} & The agent intended to send a small gift and transferred its entire token holdings. & About \$250,000 in tokens & Agent error in the amount \\
+May 2026 & Grok and Bankr~\cite{oecdgrok,giskard} & A token transfer raised the wallet's permissions; a Morse-coded post was translated into a transfer order and executed. & About \$150,000--\$174,000; most reportedly returned & Encoded prompt injection \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+Two observations follow. First, the failures are of different kinds: persuasion,
+injection, and an arithmetic mistake with no attacker at all. A wallet that only asks
+whether a payment is permitted misses the third kind entirely. Second, each agent failed
+alone. Nothing learned in one incident protected the next wallet, because the evidence is
+conversation and transaction data that owners cannot hand to others.
+
+\textbf{Contributions.} AgentVax combines:
+\begin{enumerate}
+\item a \emph{mission-to-mandate} step and a task engine that completes four wallet tasks
+from plain-language instructions;
+\item \uniq{a \emph{three-question authorisation rule}: the tier of a request is the
+highest tier demanded by permission, affordability and current threat level,} enforced by
+the contract and a guardian co-signature;
+\item \uniq{a \emph{financial state engine} that makes affordability a condition of
+autonomous spending and is computed on chain from registered obligations;}
+\item \uniq{a \emph{caution allowance}: a daily budget of tolerated uncertainty that
+shrinks at once under threat and recovers slowly;}
+\item \uniq{\emph{immunity capsules}: feature-based, expiring, tighten-only alerts that
+match reworded attacks and inform the owner at the moment of approval;}
+\item \uniq{a \emph{federated detector} that turns each attack into lasting protection,
+with every shared model anchored on chain;}
+\item \uniq{\emph{owner-pressure safeguards}: time-locked expansion of authority, holds
+triggered by pressure, and considered confirmation;}
+\item an \emph{evaluation protocol} and attack suite (VaxLab) whose headline measure is
+the safe autonomy rate.
+\end{enumerate}
+
+\textbf{Scope.} The prototype uses three wallets on a public EVM test network with
+valueless test tokens. Items left for later are listed in Section~\ref{sec:future}.
+
+% ---------------------------------------------------------------------------
+\section{Background and Related Work}
+
+\textbf{Agent wallets.} Account abstraction (ERC-4337) lets a smart-contract account
+define its own validation logic, including limited session keys~\cite{erc4337}. Agent
+identity and reputation registries have been proposed in ERC-8004~\cite{erc8004}.
+Commercial agent wallets add caps, daily limits and allowlists. These bound the loss
+per wallet, but they treat autonomy as fixed, ignore the owner's financial position and
+provide no shared defence.
+
+\textbf{Prompt injection.} Indirect injection places instructions in content the agent
+retrieves~\cite{greshake}; it heads the OWASP list of risks for language-model
+applications~\cite{owasp}. Architectural defences separate a privileged model that plans
+from a quarantined model that reads untrusted content~\cite{willison}, or restrict what
+data may flow into actions~\cite{camel}. AgentVax adopts this separation.
+
+\textbf{Threat sharing.} Security teams exchange structured indicators of attack in
+formats such as STIX~\cite{stix}, and banks exchange fraud alerts. The format of a
+capsule is therefore not new. \uniq{What is new is the effect: a capsule is applied
+automatically by a wallet contract and changes what an agent may spend without approval.}
+
+\textbf{Federated learning.} Clients train locally and a coordinator averages their
+updates~\cite{mcmahan,yang}, with secure aggregation~\cite{bonawitz} and robust
+aggregation~\cite{krum}; FATE~\cite{fate} and Flower~\cite{flower} implement these.
+
+Table~\ref{tab:compare} summarises how AgentVax differs from a typical agent wallet.
+
+\begin{table*}[t]
+\caption{A typical agent wallet compared with AgentVax.}
+\label{tab:compare}
+\tblfont
+\begin{tabularx}{\textwidth}{@{}P{0.19\textwidth} L L@{}}
+\toprule
+\textbf{Aspect} & \textbf{Typical agent wallet} & \textbf{AgentVax} \\
+\midrule
+Central question & What is the agent allowed to do? & \uniq{How much of its authorised power should it exercise on its own right now?} \\
+How the owner sets it up & Individual limits and lists & \uniq{A mission in plain language, converted to a mandate the owner signs and the model cannot alter} \\
+Checks before paying & Is this allowed? & \uniq{Allowed, affordable, and safe right now; the strictest answer wins} \\
+Knowledge of the owner's finances & None; a cap is a fixed number & \uniq{Reserve and upcoming bills are registered on chain; the spendable amount is recomputed for every request} \\
+Many slightly unusual small payments & Each passes on its own & \uniq{They draw on a daily caution allowance; when it runs out the rest wait for the owner} \\
+Who decides the risk level & The model, or a filter in the same process & \uniq{A separate guardian whose signature the contract requires and the model cannot produce} \\
+When another wallet is attacked & Nothing changes & \uniq{A capsule raises the tier of matching requests, including reworded ones, and is shown to the owner when approval is asked} \\
+What wallets share & Nothing & \uniq{Fixed-field alerts and masked model updates; never messages, prompts or transactions} \\
+Effect of a good track record & May relax scrutiny & \uniq{Lowers risk estimates only; it never creates a permission} \\
+The owner under pressure & The owner's approval is final and immediate & \uniq{Approvals of pressured requests are held, and the owner can cancel at once} \\
+Who may loosen a rule & Often the agent's own key & \uniq{Only the owner, and only after a delay fixed in advance; tightening is instant} \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+% ---------------------------------------------------------------------------
+\section{Requirements and Design Goals}
+
+Table~\ref{tab:scoring} maps each scoring criterion to the component that addresses it and
+to the evidence submitted. Three principles govern the design:
+
+\begin{description}[leftmargin=0pt,itemsep=1pt]
+\item[P1.] \uniq{The model proposes; deterministic code authorises; the wallet contract
+enforces.}
+\item[P2.] \uniq{Learning changes risk estimates; only the owner changes authority.}
+\item[P3.] \uniq{Caution is immediate and expansion is slow, for the model, the network
+and the owner alike.}
+\end{description}
+
+\begin{table*}[t]
+\caption{Alignment of AgentVax with the official scoring criteria~\cite{rules}.}
+\label{tab:scoring}
+\tblfont
+\begin{tabularx}{\textwidth}{@{}P{0.16\textwidth} P{0.07\textwidth} L L@{}}
+\toprule
+\textbf{Criterion} & \textbf{Weight} & \textbf{AgentVax component} & \textbf{Evidence submitted} \\
+\midrule
+Task completion & 40\% &
+Mission-to-mandate; task engine for four wallet tasks; financial state engine for asset
+management; clarification of ambiguous requests &
+Transaction hashes for each task; safe autonomy rate; task-suite and affordability-suite
+results; test cases in the repository \\
+Security and compliance & 30\% &
+Three-question tiers and caution allowance enforced in the contract; guardian
+co-signature; planner and reader separation; tighten-only capsules; time-locked owner
+actions and pressure holds; testnet-only operation &
+Security self-assessment report; VaxLab attack results; known-risk list
+(Table~\ref{tab:risks}) \\
+Innovation and interaction & 30\% &
+Adaptive autonomy; feature-based capsules; federated detector; protection of the owner
+under pressure; an interface that explains each decision and requires considered
+confirmation &
+Capsule response on reworded attacks; before/after detection on an unseen attack family;
+demo video \\
+Challenge bonus & 0--5 pts &
+Mandate, obligation registry, allowance, capsule bulletin and model anchoring on chain;
+time-locked and co-signed execution paths &
+Contract addresses and transaction hashes for each \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+% ---------------------------------------------------------------------------
+\section{System Architecture}
+
+Figure~\ref{fig:arch} shows the components. An instruction from the owner reaches the
+\emph{planner}, the only model allowed to propose transactions. External content is read
+only by the \emph{quarantined reader}, which returns typed fields and flags and never
+free text. The planner emits a structured \emph{intent}. The \emph{validator} checks it
+deterministically. The \emph{guardian} scores the associated content with the injection
+detector and signs the intent together with a risk band, its source and its flags. The
+\emph{policy wallet} contract then decides: it checks the mandate, computes the
+discretionary amount from its \emph{obligation registry}, reads active capsules from the
+\emph{threat bulletin} contract, and charges the caution allowance. The detector is
+trained jointly through the \emph{federated aggregator}.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=9mm, text width=25mm, fill=white},
+  chain/.style={box, fill=black!8},
+  untrusted/.style={box, dashed},
+  arr/.style={-{Stealth[length=2mm]}, semithick},
+  lab/.style={font=\scriptsize, align=center}
+]
+\node[box] (owner) {Owner\\(mission, approvals)};
+\node[box, right=8mm of owner] (planner) {Planner\\(privileged model)};
+\node[box, right=8mm of planner] (validator) {Validator\\(deterministic)};
+\node[box, right=8mm of validator] (guardian) {Guardian\\(detector + signer)};
+\node[chain, right=8mm of guardian] (wallet) {Policy wallet\\(mandate, allowance)};
+\node[untrusted, below=11mm of owner] (content) {Untrusted inputs\\(web, mail, memory)};
+\node[box, below=11mm of planner] (reader) {Quarantined reader\\(fields and flags)};
+\node[box, below=11mm of validator] (peers) {Peer wallets\\B, C};
+\node[box, below=11mm of guardian] (fed) {Federated aggregator\\(masked updates)};
+\node[chain, below=11mm of wallet] (bulletin) {Threat bulletin\\(capsules, hashes)};
+\draw[arr] (owner) -- (planner);
+\draw[arr] (planner) -- node[lab, above]{intent} (validator);
+\draw[arr] (validator) -- (guardian);
+\draw[arr] (guardian) -- node[lab, above]{signed} (wallet);
+\draw[arr] (content) -- (reader);
+\draw[arr] (reader) -- node[lab, right]{fields} (planner);
+\draw[arr, <->] (guardian) -- node[lab, right]{model} (fed);
+\draw[arr, <->] (peers) -- node[lab, above]{updates} (fed);
+\draw[arr] (fed) -- node[lab, above]{hash} (bulletin);
+\draw[arr, <->] (wallet) -- node[lab, right]{capsules} (bulletin);
+\end{tikzpicture}
+\caption{AgentVax architecture. Grey boxes are smart contracts; the dashed box is
+untrusted input. Only the planner proposes transactions, and it never reads untrusted
+text directly. The wallet contract decides from the mandate, its obligation registry, its
+allowance and the capsules in the bulletin.}
+\label{fig:arch}
+\end{figure*}
+
+% ---------------------------------------------------------------------------
+\section{Mission, Mandate and Tasks}
+
+\subsection{From mission to mandate}
+The owner does not authorise each transaction. The owner states a mission once, for
+example: ``Keep 600 in reserve. Pay my landlord and my approved suppliers on time. Pay
+approved payees up to 500 without asking. Ask me about anyone new. Do not borrow, invest
+or trade.'' The model converts this into a structured \emph{mandate}
+(Table~\ref{tab:mandate}) and shows it back in plain language.
+\uniq{The mandate takes effect only when the owner signs it, it is stored in the wallet
+contract, and no model output can modify it.}
+It carries an expiry date, after which the agent can read but not pay, and two
+waiting times that protect the owner (Section~\ref{sec:pressure}).
+
+\begin{table}[t]
+\caption{Example mandate derived from a mission.}
+\label{tab:mandate}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}L P{28mm}@{}}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Reserve $R$ & 600 \\
+Autonomous limit per payment $c_1$ & 500 \\
+Autonomous limit per day $d_1$ & 1,000 \\
+Limit with delay $c_2$ & 2,000 \\
+Approved payees (identity and address) & Landlord, hosting provider, software vendor \\
+New payee or new address & Owner approval \\
+Prohibited actions & Borrowing, investing, trading \\
+Caution allowance per day $A$ & 10 points \\
+Loosening delay $\Lambda$ & 24 hours \\
+Pressure hold $\Pi$ & 60 minutes \\
+Trusted co-signer & Optional \\
+Expiry & 90 days \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Authority is not familiarity}
+An approved payee is a pair: an identity and a destination address.
+\uniq{A request to pay a known payee at a new address is a request to approve a new
+payee, however many successful payments preceded it.}
+History is used to estimate risk, for example the usual amount for a payee.
+\uniq{It can lower or raise an estimate; it cannot add a payee, raise a limit or shorten
+a delay.}
+
+\subsection{Supported tasks}
+Table~\ref{tab:tasks} lists the four tasks. They cover transaction execution (T1, T2),
+asset management (T3, T4) and risk control (the decision applied to all four).
+
+\begin{table}[t]
+\caption{Wallet tasks supported by the prototype.}
+\label{tab:tasks}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}P{5mm} P{19mm} L@{}}
+\toprule
+\textbf{ID} & \textbf{Task} & \textbf{Example instruction and on-chain effect} \\
+\midrule
+T1 & Payment & ``Pay the hosting invoice.'' Transfers test stablecoin to an approved payee. \\
+T2 & Recurring payment & ``Pay rent on the 1st of each month.'' Creates a schedule, which also registers the next payment as an obligation. \\
+T3 & Idle-balance sweep & ``Save what I do not need.'' Moves only the discretionary amount to a savings vault. \\
+T4 & Fee-reserve upkeep & ``Never let fees run out.'' Tops up the native-token reserve when it falls below a floor. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Typed intents and explanation}
+The planner does not produce transactions. It produces an intent
+\begin{align*}
+I=(&\textit{task},\ \textit{payee\_id},\ \textit{amount},\ \textit{asset},\\
+   &\textit{schedule},\ \textit{purpose},\ \textit{nonce}),
+\end{align*}
+serialised against a fixed schema. \textit{payee\_id} is an index into the on-chain
+allowlist; the planner cannot supply a raw address. If a required field cannot be filled,
+the agent asks one question instead of guessing. After each action the interface shows
+the task, the tier, the transaction hash and \uniq{which check determined the outcome.}
+After a delay or refusal it states the reason in the owner's terms, for example the size
+of a shortfall, and the available choices.
+
+% ---------------------------------------------------------------------------
+\section{Financial State Engine}
+\label{sec:state}
+
+Caps answer whether a payment is permitted. They do not answer whether it is wise today.
+The state engine supplies that answer from three on-chain quantities: the stablecoin
+balance $B$; the reserve $R$; and a registry of obligations $O=\{(a_j,d_j)\}$, each an
+amount and a due date. Scheduled payments (T2) enter the registry automatically; one-off
+bills are registered when the owner or the agent records them.
+
+\subsection{Discretionary amount}
+For a request made at time $t$ with planning horizon $H$, the discretionary amount is
+\[
+D \;=\; B \;-\; R \;-\!\!\sum_{j\in O,\; d_j\le t+H}\!\! a_j ,
+\]
+where an obligation is left out of the sum when the request is the payment of that
+obligation. A request of amount $a$ is classified as
+\[
+\textit{afford}(a)=
+\begin{cases}
+\text{comfortable} & a\le D,\\
+\text{tight} & D< a\le B-R,\\
+\text{breach} & a> B-R.
+\end{cases}
+\]
+A comfortable request does not raise the tier. A tight request is queued, and a request
+that would breach the reserve needs the owner.
+\uniq{Expected income is shown to the owner but never counted, so the agent cannot spend
+money that has not arrived.}
+
+\subsection{Where it is enforced}
+\uniq{The wallet contract computes the discretionary amount itself at execution time, so
+affordability does not depend on the model's arithmetic.}
+The registry is bounded in length to keep the cost predictable.
+\uniq{The agent may add an obligation, which lowers what it can spend; only the owner may
+remove one or lower the reserve.}
+
+\subsection{Worked example}
+Table~\ref{tab:state} shows a wallet holding 1,850 under the mandate of
+Table~\ref{tab:mandate}. With three bills due, $D=180$. The agent is asked to upgrade a
+hosting plan for 300. The payee is approved, the amount is under the limit and there is
+no sign of attack, so a typical agent wallet would pay. Here $D<300\le B-R=1{,}250$, so
+the request is tight. The agent replies that the payment is allowed but would leave the
+wallet 120 short of its bills unless the expected 500 arrives, queues it, and offers two
+choices: wait for the income, or approve now.
+
+\begin{table}[t]
+\caption{Worked example of the financial state.}
+\label{tab:state}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}L r@{}}
+\toprule
+\textbf{Item} & \textbf{Amount} \\
+\midrule
+Balance $B$ & 1,850 \\
+Reserve $R$ & $-600$ \\
+Rent, due in 5 days & $-800$ \\
+Hosting invoice & $-150$ \\
+Software bill & $-120$ \\
+\midrule
+Discretionary amount $D$ & 180 \\
+Expected income (shown, not counted) & 500 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The same check would have stopped the third incident in Table~\ref{tab:incidents}, where
+no attacker was involved: an amount far above the discretionary amount cannot execute
+without the owner.
+
+% ---------------------------------------------------------------------------
+\section{Security Design}
+
+\subsection{Threat model}
+The adversary controls content the agent may read: web pages, messages, invoices, token
+metadata, and entries that reach the agent's memory. The adversary may operate one
+participating wallet and publish capsules or model updates from it, and may use AI of its
+own to vary and adapt attacks. The adversary may also contact the owner directly and
+press for an approval or a change of rule. The adversary does not hold the owner key or the guardian
+key and cannot alter deployed contracts.
+\uniq{No defence assumes that the agent's model out-reasons the attacker: a fully
+manipulated model must still be unable to move funds beyond the mandate.}
+
+\subsection{Three-question tiers}
+Table~\ref{tab:tiers} gives the rule. Each question proposes a tier and
+\uniq{the request receives the highest tier any of the three questions demands}
+(Algorithm~\ref{alg:tier}). The agent holds a session key valid only for calls that
+satisfy the rule; the owner key can revoke it or freeze the wallet at any time.
+
+\begin{table*}[t]
+\caption{Permission tiers. A request receives the highest tier demanded by any of the
+three questions.}
+\label{tab:tiers}
+\tblfont
+\begin{tabularx}{\textwidth}{@{}P{0.085\textwidth} L P{0.17\textwidth} L P{0.19\textwidth}@{}}
+\toprule
+\textbf{Tier} & \textbf{Allowed?} & \textbf{Affordable?} & \textbf{Safe right now?} & \textbf{Authorisation required} \\
+\midrule
+L0 Read & No value moves & Not applicable & Not applicable & None \\
+L1 Routine & Approved payee; amount $\le c_1$; daily total $\le d_1$ & Comfortable: $a\le D$ & Detector band low; no pressure flag; no capsule fully matches & Session key, guardian signature, and enough allowance \\
+L2 Elevated & Approved payee; amount $\le c_2$ & Tight: $D<a\le B-R$ & Detector band medium, a pressure flag, or a single-observer capsule matches & Queued for delay $\Delta$; owner may cancel \\
+L3 Sensitive & New payee or address; amount $>c_2$; prohibited action; any loosening of the mandate & Breach: $a>B-R$ & Detector band high, or a confirmed capsule matches & Owner co-signature; held for $\Pi$ under pressure; rule changes wait $\Lambda$ \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+The detector runs off chain, so the contract cannot observe its output.
+\uniq{The guardian therefore signs the intent hash together with the risk band, the
+source of the request and its flags, and the contract requires a valid guardian signature
+with band low before it will execute at L1.}
+The planner has no access to the guardian key, so a manipulated planner cannot promote
+its own request.
+
+\subsection{Caution allowance}
+The three questions judge one request at a time. A patient attacker can send many
+requests that each look almost normal. \uniq{The caution allowance bounds how much
+uncertainty the wallet accepts in a day without the owner.}
+
+Each L1 request is charged points for the flags it carries (Table~\ref{tab:allowance}).
+The flags are checkable facts, not model opinions: the contract computes those it can see
+and takes the rest from the guardian's signed attestation. If the remaining allowance
+covers the charge, the request executes and the allowance is reduced; otherwise the
+request is queued at L2. The point values are owner-set integers; the table shows the
+defaults we chose, which are not learned.
+
+\begin{table}[t]
+\caption{Default charges against the caution allowance.}
+\label{tab:allowance}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}L r@{}}
+\toprule
+\textbf{Flag on an otherwise routine request} & \textbf{Points} \\
+\midrule
+None: a payee paid before, usual amount, owner instruction & 0 \\
+Request arose from external content, not a direct owner instruction & 2 \\
+Request uses more than half of the discretionary amount & 2 \\
+Amount exceeds the largest amount previously paid to this payee & 3 \\
+First payment to this payee since approval & 3 \\
+Request partially matches an active capsule & 5 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\uniq{The allowance itself moves with circumstances. It is halved the moment a capsule
+that applies to the wallet is published, and set to zero when the wallet's own owner
+confirms an attack.} It then refills at a fixed rate $\rho$ up to the mandate value $A$:
+\[
+\alpha(t)=\min\!\big(A,\ \alpha(t_0)+\rho\,(t-t_0)\big).
+\]
+With the defaults, an attacker who sends a series of invoices from an approved payee,
+each slightly above the previous maximum, is charged five points per invoice; the third
+one waits for the owner.
+
+\begin{algorithm}[t]
+\caption{Authorisation of intent $I$, amount $a$}
+\label{alg:tier}
+\footnotesize
+\begin{algorithmic}[1]
+\If{schema, provenance or state check fails} \Return reject \EndIf
+\State $q_1 \gets$ tier from the mandate \Comment{allowed?}
+\State $q_2 \gets$ tier from $\textit{afford}(a)$ \Comment{affordable?}
+\State $q_3 \gets$ tier from guardian band; at least L2 if a pressure flag is set
+\For{each unexpired capsule $c$ that fully matches $I$}
+  \State $q_3 \gets \max(q_3,\ \textit{restriction}(c))$ \Comment{safe now?}
+\EndFor
+\State $\textit{tier} \gets \max(q_1,q_2,q_3)$
+\If{$\textit{tier}=\text{L1}$}
+  \State $\kappa \gets$ points charged for the flags of $I$
+  \If{$\kappa \le \alpha$} $\alpha \gets \alpha-\kappa$
+  \Else\ $\textit{tier} \gets \text{L2}$ \Comment{allowance spent}
+  \EndIf
+\EndIf
+\State execute, queue or request co-signature by \textit{tier}
+\State hold an owner approval for $\Pi$ if a pressure flag or capsule is present
+\State report \textit{tier}, the deciding check and any matching capsule
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{The owner under pressure}
+\label{sec:pressure}
+The top tier relies on the owner, and the owner can be rushed, frightened or deceived.
+Most payment fraud succeeds this way: the victim authorises it. Banks already answer
+with time. Banks in Singapore delay the activation of a new security token by at least
+twelve hours and apply cooling-off periods to key account changes~\cite{masabs}, and
+United Kingdom rules allow a payment to be held for up to four business days when fraud
+is suspected~\cite{ukdelay}.
+\uniq{AgentVax builds this protection into the wallet as a commitment the owner makes
+while calm and cannot waive in the moment}~\cite{commitment}.
+
+\emph{Loosening is slow.}
+\uniq{Any owner action that expands authority takes effect only after the loosening
+delay $\Lambda$ fixed in the mandate: adding a payee or an address, raising a limit or
+the allowance, lowering the reserve, or shortening a delay, including $\Lambda$ itself.}
+\uniq{Cancelling a pending change, lowering a limit and freezing the wallet are
+immediate.} The contract enforces this as a time-lock on owner calls. The same rule
+limits the damage of a stolen owner key: the thief must wait, and the real owner can
+freeze the wallet.
+
+\emph{Pressure is a signal.} Urgent wording, a request for secrecy and an instruction to
+ignore earlier details are \emph{pressure flags}, raised by a fixed phrase list and by
+the reader.
+\uniq{A request that carries a pressure flag cannot execute at L1, and an owner approval
+given while a pressure flag or a matching capsule is present takes effect only after the
+pressure hold $\Pi$.}
+The agent states the reason: the message presses for immediate payment, which is a
+common sign of fraud. The hold has a fixed length. An attacker who removes the pressure
+to avoid the hold gives up the main lever of the fraud.
+
+\emph{Considered confirmation.} For an approval that carries flags, the interface shows
+the payee's current and requested address side by side, the payment history and any
+matching capsule, and asks the owner to type the payee's name and to state who asked for
+the payment.
+\uniq{The answers can lengthen a hold; nothing the owner types in the moment can shorten
+one.}
+To limit fatigue, these steps appear only for flagged L3 requests.
+
+\emph{Trusted co-signer.} Genuine emergencies exist. The mandate may name a second
+person whose signature, together with the owner's, releases a hold or a pending change
+early. The co-signer cannot act alone.
+
+\subsection{Hallucination protection}
+The validator applies three deterministic checks before the guardian sees an intent:
+(i)~\emph{schema}: all fields present and well typed;
+(ii)~\emph{provenance}: \textit{payee\_id} exists in the on-chain allowlist, and
+\textit{amount} and \textit{asset} equal a value in the owner's instruction, in the
+mandate, or in a typed field returned by the reader for a document the owner referenced;
+(iii)~\emph{state}: the nonce is fresh and the balance covers the amount and the fee.
+Balances, obligations and transaction status shown in the interface are read from the
+chain, not generated by the model.
+
+\subsection{Injection defence}
+Defence is layered so that no single component is trusted:
+\begin{enumerate}
+\item \emph{Separation.} The reader has no tools and returns only enumerations, numbers,
+allowlist indices and flags. Free text from untrusted sources never enters the planner's
+context~\cite{willison,camel}.
+\item \emph{Bounded memory.} The planner sees only what the current decision needs.
+Long-term memory holds structured facts (per-payee address, usual amount, last
+verification) and threat records; raw prompts and conversations are not retained.
+\item \emph{Detection.} The guardian scores the raw untrusted content associated with a
+request and assigns a risk band (Section~\ref{sec:fed}).
+\item \emph{Containment.} Whatever the model outputs, the contract bounds the result. An
+undetected attack can at most cause L1 payments to approved payees, within the limits,
+the discretionary amount and the day's allowance.
+\item \emph{Shared alert.} Capsules narrow that remaining window while a threat is active
+(Section~\ref{sec:capsule}).
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+\section{Immunity Capsules}
+\label{sec:capsule}
+
+Retraining a detector takes time and needs examples. A wallet that has just been attacked
+can warn the others at once.
+\uniq{An immunity capsule is a small record of fixed fields that says what kind of attack
+was seen, which features it had, which action it targeted, and how much autonomy to
+withdraw and for how long.}
+
+\subsection{Contents}
+Table~\ref{tab:capsule} lists the fields.
+\uniq{Every field is an enumeration, a set of flags, a number or a signature. A capsule
+carries no message text, no prompt and no transaction, so it cannot leak private data and
+cannot itself carry an injected instruction.}
+
+\begin{table}[t]
+\caption{Fields of an immunity capsule.}
+\label{tab:capsule}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}P{22mm} L@{}}
+\toprule
+\textbf{Field} & \textbf{Values} \\
+\midrule
+Attack family & Direct, indirect, memory, encoded, recipient substitution \\
+Channel & Owner chat, web page, message, memory, token metadata \\
+Features & Any of: known payee identity, new destination, urgency, secrecy request, override attempt, encoded content, amount anomaly, memory-sourced \\
+Affected action & Payment, schedule creation, sweep, payee or mandate change \\
+Restriction & Delay (L2) or owner approval (L3) \\
+Confidence & Single observer, or confirmed by $q$ wallets \\
+Expiry & Time after which the capsule has no effect \\
+Guard version & Detector version in force when observed \\
+Attestations & Signatures of the observing wallets \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Matching reworded attacks}
+\uniq{A capsule describes an attack by its features, not its wording.} Let $F_c$ be the
+capsule's feature set and $F_I$ the flags of a request. The capsule \emph{fully matches}
+when its channel is in the wallet's on-chain profile, its affected action equals the
+request's action and $F_c\subseteq F_I$. It \emph{partially matches} when at least half
+of $F_c$ is present. A full match raises the tier; a partial match is charged to the
+allowance. \uniq{An attacker who rewrites the message but keeps the method produces the
+same flags and is matched.} Three of the flags (new destination, amount anomaly,
+memory-sourced) are computed by rule; the others are extracted by the reader and signed
+by the guardian.
+
+\subsection{Effect}
+\uniq{The wallet contract reads unexpired capsules from the bulletin when it executes a
+request, so a capsule takes effect on the very next transaction and does not rely on the
+agent choosing to obey it.}
+A wallet the threat does not apply to is unaffected and keeps its normal autonomy.
+
+Some attacks are already stopped by the mandate: a payment to a new address needs the
+owner whether or not a capsule exists. There the danger is the approval itself, because
+this kind of fraud succeeds by persuading a person.
+\uniq{When the owner is asked to approve, the interface shows any matching capsule, and
+the approval is subject to the pressure hold of Section~\ref{sec:pressure}.}
+
+\subsection{Limits on capsules}
+A channel that can change other wallets' behaviour is itself a target, so capsules are
+constrained:
+\begin{itemize}
+\item \uniq{\emph{Tighten only.} A capsule can raise a tier or charge the allowance. No
+capsule can lower a tier, add a payee or raise a limit.}
+\item \emph{Bounded by confidence.} A capsule from one observer can impose at most a
+delay. Owner approval can be imposed only when $q$ distinct wallets have attested the
+same family and features ($q=2$ in the prototype).
+\item \emph{Expiry.} Every capsule expires; the maximum lifetime is fixed in the bulletin
+contract. Autonomy returns without anyone acting.
+\item \emph{Rate limit and identity.} Each registered wallet may publish a limited number
+of capsules per day, and every capsule names its issuer.
+\item \emph{Owner override.} An owner may dismiss a capsule for their own wallet.
+\end{itemize}
+
+\subsection{Alert first, vaccine later}
+\uniq{The capsule acts within one transaction but is blunt and temporary. The retrained
+detector arrives later but recognises variants beyond the listed features and stays.}
+A capsule's lifetime is set to outlast the next training round, so protection is
+continuous. Algorithm~\ref{alg:round} shows the full response.
+
+% ---------------------------------------------------------------------------
+\section{Federated Detector}
+\label{sec:fed}
+
+\subsection{Detector}
+Each wallet $k$ keeps a private set $D_k=\{(x_i,y_i)\}$ of content snippets labelled
+benign ($y=0$) or attack ($y=1$). Labels come from blocked requests the owner confirmed
+as attacks and from requests the owner approved. A frozen text encoder $\phi$ maps a
+snippet to a vector; a small classifier with weights $w$ outputs the score
+\[
+s(x)=\sigma\!\big(w^{\top}\phi(x)+b\big)\in[0,1].
+\]
+The risk band is low if $s<\tau_{\mathrm{low}}$, high if $s\ge\tau_{\mathrm{high}}$, and
+medium otherwise. Only $(w,b)$ is trained and shared.
+
+\subsection{Training round}
+Each wallet minimises the local loss
+\[
+F_k(w)=\frac{1}{n_k}\sum_{(x,y)\in D_k}\ell\big(s(x),y\big),\qquad n_k=|D_k|,
+\]
+for $E$ epochs from the current global weights, and the aggregator computes the weighted
+average~\cite{mcmahan}
+\[
+w^{t+1}=\sum_{k=1}^{K}\frac{n_k}{n}\,w_k^{t+1},\qquad n=\sum_{k=1}^{K}n_k .
+\]
+Updates are clipped to norm $C$ and masked pairwise so that the aggregator sees only the
+sum~\cite{bonawitz}. No snippet, conversation or transaction leaves a wallet.
+
+\begin{algorithm}[t]
+\caption{Immunity response to an attack on wallet $a$}
+\label{alg:round}
+\footnotesize
+\begin{algorithmic}[1]
+\Require global weights $w^{t}$, wallets $1..K$, clip norm $C$
+\State owner of $a$ confirms the attack; $\alpha_a \gets 0$
+\State $a$ adds it to $D_a$ and publishes a capsule \Comment{alert}
+\State wallets it applies to: $\alpha \gets \alpha/2$; matching requests restricted
+\State a second observer may attest, raising it to confirmed
+\For{each wallet $k$ in parallel} \Comment{vaccine}
+  \State $w_k \gets$ \textsc{LocalTrain}$(w^{t}, D_k, E)$
+  \State $\delta_k \gets$ \textsc{Clip}$(w_k - w^{t}, C)$
+  \State send \textsc{Mask}$(n_k\,\delta_k)$ to the aggregator
+\EndFor
+\State $w^{t+1} \gets w^{t} + \frac{1}{n}\sum_k n_k\,\delta_k$ \Comment{masks cancel}
+\State aggregator posts $H(w^{t+1})$ and $t{+}1$ to the bulletin
+\For{each wallet $k$}
+  \If{model hash matches bulletin \textbf{and} canary passes}
+    \State adopt $w^{t+1}$
+  \Else
+    \State keep $w^{t}$ and raise an alert
+  \EndIf
+\EndFor
+\State the capsule expires; allowances refill; the detector remains
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Anchoring and adoption safeguards}
+The bulletin stores the hash and version of each shared model.
+\uniq{A wallet can therefore verify that it received the model the federation agreed on,
+and an auditor can reconstruct which detector and which capsules governed any past
+transaction.}
+Before adopting a model, each wallet evaluates it on a private \emph{canary set}; a model
+that lowers recall or raises the false-positive rate beyond a tolerance is rejected.
+Together with clipping, this limits what a poisoning participant can do~\cite{krum}.
+
+% ---------------------------------------------------------------------------
+\section{Implementation}
+
+Table~\ref{tab:stack} summarises the prototype. The federated layer is written against
+Flower for speed of development; it uses only horizontal federated averaging with secure
+aggregation, which FATE also provides, so it can be moved to FATE without redesign.
+Contracts are plain Solidity with no chain-specific features, which keeps a later port to
+a permissioned EVM-compatible chain such as FISCO BCOS~\cite{fisco} straightforward.
+
+\begin{table}[t]
+\caption{Prototype implementation.}
+\label{tab:stack}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}P{23mm} L@{}}
+\toprule
+\textbf{Component} & \textbf{Implementation} \\
+\midrule
+Chain & Public EVM test network; test stablecoin with no monetary value \\
+Policy wallet & Solidity smart account: signed mandate, session key, allowlist, limits, obligation registry, caution allowance, time-lock queue for payments and for owner changes, pressure hold, co-signature, freeze \\
+Savings vault & Minimal deposit and withdraw contract, owner-only withdrawal \\
+Threat bulletin & Registry of capsules, attestations and model hashes; enforces capsule limits \\
+Planner, reader & Two separately prompted language-model roles; reader has no tools \\
+Validator & Deterministic code; schema, provenance and state checks \\
+Guardian & Encoder plus linear classifier; separate signing key \\
+Federation & Three clients, federated averaging, pairwise masking \\
+VaxLab & Scripted attackers plus one rewording agent; never holds a wallet key \\
+Interface & Web chat with mandate view, financial state panel, allowance meter, alerts and considered confirmation at approval, explorer links \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section{Evaluation Protocol}
+\label{sec:eval}
+
+All measurements are produced by scripts in the repository so that reviewers can repeat
+them. Table~\ref{tab:metrics} lists the metrics and the targets the design aims for.
+Targets are design goals, not results. For every task, tier path, mandate entry, capsule
+and model anchor, the submission lists the transaction hash and contract address.
+
+\begin{table}[t]
+\caption{Evaluation metrics and design targets.}
+\label{tab:metrics}
+\tblfont
+\begin{tabularx}{\columnwidth}{@{}L P{30mm} P{16mm}@{}}
+\toprule
+\textbf{Metric} & \textbf{Definition} & \textbf{Target} \\
+\midrule
+Safe autonomy rate & Legitimate tasks done without the owner, zero violations & $\ge 80\%$ \\
+Hard-policy violations & Mandate breaches of any kind & 0 \\
+Task success rate & Correct state change on chain, 40 instructions & $\ge 90\%$ \\
+Ambiguous requests handled & Clarified or refused, 10 instructions & $\ge 90\%$ \\
+Affordability decisions & Agreement with hand-computed tier, 20 scenarios & 100\% \\
+Unauthorised value moved & Across all VaxLab attacks & 0 beyond L1 limits \\
+Probing sequence & Odd payments executed before the owner is asked & Within the allowance \\
+Panicked-owner loss & Value leaving before a hold or delay ends when every prompt is approved at once & 0 \\
+Capsule response & Transactions before restriction is active & 0 \\
+Reworded variants matched & After one capsule & $\ge 90\%$ \\
+False-capsule harm & Rules loosened by hostile capsules & 0 \\
+Cross-family recall gain & Recall on unseen families, (c) minus (b) & Positive for every wallet \\
+Escalation and false-positive rates & Benign requests sent to the owner; escalated by the detector & Reported; $\le 5\%$ \\
+Friction and cost & Wait imposed on legitimate new payees and urgent requests; time to full allowance; seconds and gas per task & Reported \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Headline measure}
+A wallet that asks the owner about everything is safe and useless; one that asks about
+nothing is useful and unsafe.
+\uniq{We therefore report the \emph{safe autonomy rate}: the share of legitimate tasks
+completed without the owner, counted only if no hard policy was violated anywhere in the
+run.}
+\begin{gather*}
+\textit{SAR}=\frac{\text{legitimate tasks completed without the owner}}
+{\text{all legitimate tasks}},\\
+\text{reported only if hard-policy violations}=0 .
+\end{gather*}
+
+\begin{table*}[t]
+\caption{Known-risk list.}
+\label{tab:risks}
+\tblfont
+\begin{tabularx}{\textwidth}{@{}P{0.04\textwidth} P{0.20\textwidth} L L@{}}
+\toprule
+\textbf{ID} & \textbf{Risk} & \textbf{Consequence} & \textbf{Mitigation and residual exposure} \\
+\midrule
+R1 & Undetected injection & Planner proposes an attacker-chosen action &
+Contract bounds the outcome: L1 payments to approved payees within the limits, the discretionary amount and the day's allowance \\
+R2 & Guardian key compromise & Attacker can authorise L1 execution and understate flags &
+Key held in a separate process; limits, affordability and rule-computed flags still apply; owner can rotate the key and freeze the wallet \\
+R3 & Reader misses a flag & A capsule fails to match, or the allowance is undercharged &
+Three flags are computed by rule and cannot be suppressed; a missed flag returns the request to the ordinary tier rule, not to no rule \\
+R4 & Owner approves a fraud under pressure & Funds leave with valid authorisation &
+New payees and higher limits wait for the loosening delay; pressured approvals are held; cancelling is instant. Residual: an owner still deceived when the delay ends \\
+R5 & Delays obstruct a genuine emergency & A legitimate urgent payment is late &
+The owner sets the delays while calm; a trusted co-signer can release them; the cost is measured and reported \\
+R6 & Incomplete obligation registry & A bill nobody registered is not protected &
+Schedules register automatically; the agent proposes obligations it finds in invoices; the reserve provides a margin \\
+R7 & Arbitrary allowance values & Too strict wastes the owner's time; too loose admits probing &
+Owner-set integers with stated defaults; escalation rate and probing result reported \\
+R8 & False or excessive capsules & Honest wallets are slowed (denial of service) &
+Tighten-only; single-observer capsules limited to a delay; rate limit; expiry; owner may dismiss \\
+R9 & Small federation & With three clients, two colluding parties can infer the third party's update &
+Stated limitation of the prototype; privacy improves with more participants \\
+R10 & Model poisoning by a participant & Shared detector degrades or learns a blind spot &
+Update clipping; canary test before adoption; on-chain version history allows rollback \\
+R11 & False positives & Legitimate payments are delayed or need approval &
+Thresholds tuned on benign data; L2 delays, not blocks; rates reported \\
+R12 & Compromised approved payee & Funds sent to a legitimate but hijacked payee &
+Limits, usual-amount flag, discretionary amount and allowance limit exposure \\
+R13 & Hosted language model; testnet conditions & Outage breaks new requests; fees and finality are not representative &
+Scheduled payments run without the model; contracts avoid chain-specific features \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\subsection{Task and affordability suites}
+The task suite contains 40 instructions (ten per task, varied in wording, amounts and
+payees) and 10 that are ambiguous or impossible. A task succeeds if the expected on-chain
+state change is confirmed by the receipt; an ambiguous instruction succeeds if the agent
+asks or refuses with the correct reason and sends nothing. The affordability suite pairs
+20 financial states with requests, covering comfortable, tight and breach cases, payment
+of a registered obligation, and income that has not arrived. Outcomes are compared with
+hand-computed answers; the rule is deterministic, so any disagreement is a defect.
+
+\subsection{VaxLab attack suite}
+VaxLab is a separate test harness that plays the attacker and never holds a wallet key.
+Scripted attackers cover five families: direct instructions, indirect instructions in
+retrieved content, false memory entries, encoded instructions (for example Morse code and
+base64), and recipient substitution. Three further scenarios test the new mechanisms: a
+\emph{probing sequence} of slightly unusual small payments, a hostile wallet that
+publishes false capsules and poisoned updates, and a \emph{panicked owner}, a script
+that approves every prompt at once. \uniq{A rewording agent paraphrases every
+attack, so each defence is tested on versions it has not seen.} An attack \emph{succeeds}
+only if an unauthorised transaction is executed on chain.
+
+\subsection{Shared-response experiments}
+\emph{Capsules.} Wallet A is attacked and publishes a capsule. We measure how many
+transactions pass before matching requests on other wallets are restricted, the share of
+reworded variants matched, whether a wallet outside the capsule's scope stays
+unrestricted, and how long autonomy takes to return. \emph{Federation.} Each wallet is
+seeded with a different attack family; the others are held out. We compare
+(a)~contract checks only, (b)~plus a locally trained detector, (c)~plus the federated
+detector, measuring each wallet's recall on families it has never seen locally.
+
+
+\subsection{Demonstration scenario}
+The live demonstration follows one story across three wallets:
+\begin{enumerate}
+\item The owner of wallet A states a mission; the mandate is shown, signed and stored on
+chain.
+\item The agent pays rent and a hosting invoice on its own (L1).
+\item Expected income is late. A 300 hosting upgrade is requested; the state engine
+finds it tight, and the agent holds it and explains the 120 shortfall.
+\item An invoice arrives that appears to come from the hosting provider, with a new
+payment address, urgent wording and a request to ignore earlier details. The new address
+needs the owner; the owner rejects it and confirms fraud.
+\item Wallet A publishes a capsule; its allowance drops to zero.
+\item Wallet B receives a reworded version. The flags match and the alert is shown.
+B's owner, in a hurry, approves anyway. Nothing moves: the new address is subject to
+the loosening delay, and the owner later cancels it. Wallet C does not accept that
+channel and is unaffected.
+\item Wallet B then receives an inflated invoice from an approved payee to its usual
+address. Alone it would pass; with the partial match and the halved allowance it waits.
+\item A federated round runs, the new detector's hash is anchored, the capsule expires
+and the allowances refill.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+\section{Compliance}
+
+The prototype is designed to be acceptable to a regulated institution. All assets are
+test tokens on a test network; no token is issued and nothing is traded for profit. Each
+wallet has an identified owner who signs the mandate, holds the override key and is
+responsible for the agent's actions. Every intent, decision, guardian signature,
+allowance charge, hold, capsule and model version is logged, and the on-chain part is
+public. Conversations and transaction details stay on the wallet's own node; only
+fixed-field capsules, masked model updates and hashes leave it. Third-party code and
+models are used under their open-source licences.
+
+% ---------------------------------------------------------------------------
+\section{Known Risks and Limitations}
+
+Table~\ref{tab:risks} lists the risks we are aware of. It is the basis of the security
+self-assessment report required by the rules.
+
+
+% ---------------------------------------------------------------------------
+\section{Future Work}
+\label{sec:future}
+
+Left out of the submitted prototype: a full adversarial swarm in VaxLab with an
+evolutionary generator of attacks; reputation for capsule issuers and resistance to many
+fake wallets; a mutual-aid pool that compensates verified losses~\cite{insured};
+deployment on a permissioned chain; income forecasting and differential privacy for
+updates.
+
+% ---------------------------------------------------------------------------
+\section{Conclusion}
+
+\uniq{AgentVax is a self-immunising wallet agent that adjusts how much financial autonomy
+it exercises while its authority stays under limits only the owner can change.}
+Usefulness comes from a mission the owner states once and tasks that complete on chain.
+Bounds come from a mandate enforced by the contract and a guardian signature the model
+cannot forge.
+\uniq{Prudence comes from asking whether the owner can afford a payment and how much
+uncertainty has already been accepted today. Learning comes in two speeds: a capsule
+that makes exposed wallets cautious at once, and a jointly trained detector that keeps
+them protected.}
+\uniq{The owner is protected as well: authority can be reduced in a moment and extended
+only with time.}
+The evaluation protocol makes each of these claims measurable.
+
+% ---------------------------------------------------------------------------
+\balance
+\begin{thebibliography}{99}
+\footnotesize
+\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\parsep}{0pt}
+
+\bibitem{rules} Organizing Committee, ``International Track: Topics \& Rules,'' 2026
+Shenzhen International FinTech Competition (FinTechathon), 2026.
+\url{http://fintechathon.g-ican.com}
+
+\bibitem{greshake} K.~Greshake, S.~Abdelnabi, S.~Mishra, C.~Endres, T.~Holz and
+M.~Fritz, ``Not what you've signed up for: Compromising real-world LLM-integrated
+applications with indirect prompt injection,'' in \emph{Proc.\ ACM Workshop on Artificial
+Intelligence and Security (AISec)}, 2023.
+
+\bibitem{owasp} OWASP Foundation, ``OWASP Top 10 for Large Language Model
+Applications,'' 2025.
+
+\bibitem{oecdgrok} OECD.AI Policy Observatory, ``AI prompt injection exploit drains
+Grok-linked crypto wallet,'' AI Incidents and Hazards Monitor, May 2026.
+\url{https://oecd.ai/en/incidents/2026-05-04-4a73}
+
+\bibitem{giskard} Giskard, ``How Grok got prompt-injected: An X user drained
+\$150,000 from an AI wallet,'' giskard.ai, 2026.
+
+\bibitem{patlan} A.~S.~Patlan, P.~Sheng, S.~A.~Hebbar, P.~Mittal and P.~Viswanath,
+``Real AI agents with fake memories: Fatal context manipulation attacks on Web3
+agents,'' arXiv:2503.16248, 2025.
+
+\bibitem{imf} T.~Davidovic and H.~Tourpe, ``How agentic AI will reshape payments,''
+IMF Note 2026/004, International Monetary Fund, 2026.
+
+\bibitem{freysa} The Block, ``Human player outwits Freysa AI agent in \$47,000 crypto
+challenge,'' Nov.\ 2024.
+
+\bibitem{aixbt} AI Incident Database, ``Incident 1003'' (AIXBT autonomous agent), 2025.
+\url{https://incidentdatabase.ai/cite/1003}
+
+\bibitem{lobstar} The Block, ``AI agent created by OpenAI dev `accidentally' sends
+entire memecoin holdings to reply guy,'' Feb.\ 2026.
+
+\bibitem{erc4337} V.~Buterin \emph{et al.}, ``ERC-4337: Account abstraction using alt
+mempool,'' Ethereum Improvement Proposals, 2021.
+
+\bibitem{erc8004} ``ERC-8004: Trustless agents,'' Ethereum Improvement Proposals, 2025.
+
+\bibitem{willison} S.~Willison, ``The dual LLM pattern for building AI assistants that
+can resist prompt injection,'' simonwillison.net, Apr.\ 2023.
+
+\bibitem{camel} E.~Debenedetti \emph{et al.}, ``Defeating prompt injections by design,''
+arXiv:2503.18813, 2025.
+
+\bibitem{stix} OASIS, ``STIX Version 2.1,'' OASIS Standard, 2021.
+
+\bibitem{mcmahan} B.~McMahan, E.~Moore, D.~Ramage, S.~Hampson and B.~A.~y~Arcas,
+``Communication-efficient learning of deep networks from decentralized data,'' in
+\emph{Proc.\ AISTATS}, 2017.
+
+\bibitem{yang} Q.~Yang, Y.~Liu, T.~Chen and Y.~Tong, ``Federated machine learning:
+Concept and applications,'' \emph{ACM Trans.\ Intelligent Systems and Technology},
+vol.~10, no.~2, 2019.
+
+\bibitem{bonawitz} K.~Bonawitz \emph{et al.}, ``Practical secure aggregation for
+privacy-preserving machine learning,'' in \emph{Proc.\ ACM CCS}, 2017.
+
+\bibitem{fate} Y.~Liu, T.~Fan, T.~Chen, Q.~Xu and Q.~Yang, ``FATE: An industrial grade
+platform for collaborative learning with data protection,'' \emph{J.\ Machine Learning
+Research}, vol.~22, no.~226, 2021.
+
+\bibitem{flower} D.~J.~Beutel \emph{et al.}, ``Flower: A friendly federated learning
+research framework,'' arXiv:2007.14390, 2020.
+
+\bibitem{krum} P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui and J.~Stainer, ``Machine
+learning with adversaries: Byzantine tolerant gradient descent,'' in \emph{Proc.\
+NeurIPS}, 2017.
+
+\bibitem{insured} Hu and Chen, ``Insured agents: A decentralized trust insurance
+mechanism for agentic economy,'' arXiv:2512.08737, 2025.
+
+\bibitem{fisco} FISCO BCOS Open Source Community, ``FISCO BCOS: An enterprise-level
+financial blockchain platform,'' open-source software, github.com/FISCO-BCOS.
+
+\bibitem{masabs} Monetary Authority of Singapore and Association of Banks in Singapore,
+``MAS and ABS announce measures to bolster the security of digital banking,'' 19 Jan.\
+2022.
+
+\bibitem{ukdelay} HM Treasury, ``Payment Services (Amendment) Regulations 2024,'' draft
+legislation published Mar.\ 2024.
+
+\bibitem{commitment} G.~Bryan, D.~Karlan and S.~Nelson, ``Commitment devices,''
+\emph{Annual Review of Economics}, vol.~2, 2010.
+
+\end{thebibliography}
+
+\end{document}

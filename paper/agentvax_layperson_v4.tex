@@ -1,0 +1,747 @@
+% AgentVax paper, layperson edition, version 4 (owner-pressure safeguards)
+%
+% Clean version:        pdflatex agentvax_layperson_v4.tex   (run twice)
+% Highlighted version:  pdflatex -jobname=agentvax_layperson_v4_highlighted "\def\dohighlight{1}\input{agentvax_layperson_v4.tex}"
+%                       (or uncomment the next line)
+% \def\dohighlight{1}
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage[scaled=0.9]{helvet}
+\usepackage[a4paper,top=20mm,bottom=22mm,left=22mm,right=22mm]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs,tabularx,array}
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{accent}{HTML}{1F4E79}
+\definecolor{boxbg}{HTML}{EEF3F8}
+
+% ---- Yellow highlighter that breaks across lines (no extra package needed) ----
+\definecolor{hlyellow}{HTML}{FFF14D}
+\makeatletter
+\newcommand{\uniq@box}[1]{\begingroup\setlength{\fboxsep}{0pt}%
+  \colorbox{hlyellow}{\rule[-0.25em]{0pt}{1.05em}#1}\endgroup}
+\newcommand{\uniq@gap}{{\color{hlyellow}\leaders\hrule height 0.8em depth 0.25em
+  \hskip \fontdimen2\font plus \fontdimen3\font minus \fontdimen4\font}}
+\def\uniq@scan#1 #2\uniq@end{%
+  \if\relax\detokenize{#1}\relax\else\uniq@box{#1}\fi
+  \if\relax\detokenize{#2}\relax\expandafter\@gobble\else\expandafter\@firstofone\fi
+  {\uniq@gap\uniq@scan#2\uniq@end}}
+\ifdefined\dohighlight
+  \newcommand{\uniq}[1]{\leavevmode\uniq@scan#1 \uniq@end}
+\else
+  \newcommand{\uniq}[1]{#1}
+\fi
+\makeatother
+
+\titleformat{\section}{\normalfont\Large\bfseries\color{accent}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{14pt plus 2pt minus 2pt}{5pt}
+\setlist{itemsep=2pt,topsep=3pt,leftmargin=*}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Wrapping, left-aligned table columns so text never leaves its cell
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{5pt}
+
+\newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
+\newcommand{\callout}[2]{%
+  \par\medskip\noindent
+  \begingroup\setlength{\fboxsep}{9pt}%
+  \fcolorbox{accent}{boxbg}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \textbf{\color{accent}#1}\par\smallskip #2}}%
+  \endgroup\par\medskip}
+
+\emergencystretch=2em
+\raggedbottom
+
+\title{\vspace{-8mm}\textbf{AgentVax, Explained Simply}\\[4pt]
+\large An AI assistant that runs your payments, knows when to stop and ask,\\
+and learns from attacks on other wallets}
+\author{\todo{Author 1}, \todo{Author 2}, \todo{Author 3}\\[2pt]
+\small Team \todo{team name}, \todo{university, country}\\
+\small Layperson edition of the AgentVax technical paper\\
+\small 2026 Shenzhen International FinTech Competition, International Track, Topic F: Agent Wallet}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-6mm}
+
+% ---------------------------------------------------------------------------
+\callout{TL;DR}{%
+\begin{itemize}
+\item \textbf{The problem.} AI assistants now hold digital wallets and pay for things on
+their own. Several have already been tricked, or have simply made mistakes, and sent
+away real money.
+\item \textbf{What AgentVax is.} A digital wallet run by an AI assistant. You give it a
+mission once, in plain language, and it handles four everyday money jobs.
+\item \textbf{The big idea.} \uniq{Other AI wallets ask ``what is the AI allowed to do?''
+AgentVax also asks ``how much of that should it do on its own right now?''}
+\item \textbf{How it decides.} \uniq{Before every payment: Am I allowed? Can we afford
+it? Is it safe right now?} The strictest answer wins. \uniq{A daily allowance of
+``benefit of the doubt'' limits how many slightly odd payments it will make without
+asking you.}
+\item \textbf{Why it is hard to trick.} The rules live in the wallet itself, not in the
+AI. Even a fully fooled AI cannot go past them.
+\item \textbf{What is new between wallets.} \uniq{When one wallet is attacked, it sends
+out a short alert that makes other wallets at risk more careful straight away, even if
+the trick is reworded.} Then all the wallets learn to recognise it for good, without
+sharing private information. Alert first, vaccine later.
+\item \textbf{It protects you, too.} \uniq{Scammers rush people. So anything that gives
+the assistant more power takes a day to come into force, pushy requests are deliberately
+slowed down, and you can cancel at any time.}
+\item \textbf{Where it stands.} This is a design and a test plan. It runs with play money
+on a public test network. The numbers in this document are goals, not results.
+\end{itemize}}
+
+\ifdefined\dohighlight
+{\small\textbf{Reading note.} \uniq{Yellow highlight} marks what is special about
+AgentVax. Parts without highlight, such as spending limits and approved-payee lists, are
+things most AI wallets already have.\par}
+\fi
+
+% ---------------------------------------------------------------------------
+\section{The problem}
+
+Imagine you hire an assistant and give them a company card. You say: ``Pay our bills and
+keep the account in order.'' One day an invoice arrives that looks exactly like your
+usual supplier's, with a note: ``We have changed bank. Please pay to this new account
+today.'' A careful human would phone the supplier. An AI assistant may simply pay,
+because to an AI everything it reads is just text, and it cannot always tell your
+instructions from a stranger's. An instruction hidden inside something the AI reads is
+called a \emph{prompt injection}.
+
+AI assistants have already sent away real money (Table~\ref{tab:incidents}).
+
+\begin{table}[H]
+\caption{Real cases of AI assistants sending money they should not have sent.}
+\label{tab:incidents}
+\small
+\begin{tabularx}{\linewidth}{@{}P{20mm} L P{34mm}@{}}
+\toprule
+\textbf{When} & \textbf{What happened} & \textbf{Money involved} \\
+\midrule
+Nov.\ 2024 & In a public challenge, a player talked an AI guard into paying out the prize it was guarding~[1]. & About \$47,000 \\
+Mar.\ 2025 & An intruder got into an AI trader's control panel and left it instructions to send out its funds~[2]. & About \$106,000 \\
+Feb.\ 2026 & An AI trader meant to give a stranger a few dollars and sent everything it owned. Nobody attacked it; it got the amount wrong~[3]. & About \$250,000 in tokens \\
+May 2026 & An attacker posted a message in Morse code. One AI translated it, and a wallet AI carried out the hidden order to send money~[4]. & About \$150,000 or more; most reportedly returned \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Two things stand out. The failures were different: some were tricks, one was a plain
+mistake. And each assistant failed alone. Nothing learned from one case protected the
+next wallet, because the evidence is private: someone's chats and payments.
+
+% ---------------------------------------------------------------------------
+\section{What AgentVax is}
+
+AgentVax is an AI assistant with its own digital wallet. It is built on three rules:
+
+\begin{enumerate}
+\item \uniq{\textbf{The AI suggests; fixed rules decide; the wallet enforces.}}
+\item \uniq{\textbf{Learning can make it more careful. Only you can give it more power.}}
+\item \uniq{\textbf{Being careful is instant. Giving more power is slow, even when you
+ask for it.}}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw=accent, rounded corners=2pt, align=center, minimum height=11mm, text width=26mm, fill=white},
+  safe/.style={box, fill=boxbg},
+  risky/.style={box, dashed, draw=black!70},
+  arr/.style={-{Stealth[length=2.2mm]}, semithick}
+]
+\node[box] (you) {You\\(mission, approvals)};
+\node[box, right=7mm of you] (ai) {AI assistant\\(makes a plan)};
+\node[safe, right=7mm of ai] (check) {Three questions\\(checkers, guard)};
+\node[safe, right=7mm of check] (wallet) {Wallet\\(has the final say)};
+\node[risky, below=9mm of you] (mail) {Outside messages\\and web pages};
+\node[box, below=9mm of ai] (clerk) {Mail clerk\\(fills in a form)};
+\node[safe, below=9mm of check] (group) {Other wallets\\(alerts, lessons)};
+\draw[arr] (you) -- (ai);
+\draw[arr] (ai) -- (check);
+\draw[arr] (check) -- (wallet);
+\draw[arr] (mail) -- (clerk);
+\draw[arr] (clerk) -- (ai);
+\draw[arr, <->] (group) -- (check);
+\end{tikzpicture}
+\caption{How a request travels. Shaded boxes are the parts the AI cannot override. The
+dashed box is anything written by outsiders.}
+\label{fig:flow}
+\end{figure}
+
+% ---------------------------------------------------------------------------
+\section{You give it a mission, not a list of orders}
+
+You do not approve each payment. You say what you want once:
+
+\begin{quote}
+``Keep \$600 as a safety cushion. Pay my landlord and my approved suppliers on time. Pay
+approved payees up to \$500 without asking me. Ask me about anyone new. Do not borrow,
+invest or trade.''
+\end{quote}
+
+The assistant turns this into a short rule sheet (Table~\ref{tab:mandate}) and reads it
+back to you. \uniq{The rule sheet only counts once you sign it. It is then stored in the
+wallet, where the AI cannot change it.} It also has an end date, after which the
+assistant can look but not pay, and two waiting times that protect you when you are
+under pressure (Section~\ref{sec:pressure}).
+
+\begin{table}[H]
+\caption{The rule sheet made from the mission above.}
+\label{tab:mandate}
+\small
+\begin{tabularx}{0.85\linewidth}{@{}L P{52mm}@{}}
+\toprule
+\textbf{Rule} & \textbf{Setting} \\
+\midrule
+Safety cushion never to be touched & \$600 \\
+Largest payment without asking & \$500 \\
+Most it may pay in a day without asking & \$1,000 \\
+Approved payees & Landlord, hosting company, software company \\
+Someone new, or a new account for someone known & Ask me \\
+Never do & Borrow, invest, trade \\
+Daily ``benefit of the doubt'' & 10 points \\
+Wait before a rule is relaxed or a payee added & 24 hours \\
+Hold on your approval when a request is pushy & 60 minutes \\
+Trusted second person & Optional \\
+Valid for & 90 days \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{What the wallet can do}
+
+The first version does four jobs (Table~\ref{tab:jobs}). They are deliberately boring:
+paying, saving and keeping things running.
+
+\begin{table}[H]
+\caption{The four jobs.}
+\label{tab:jobs}
+\small
+\begin{tabularx}{\linewidth}{@{}P{32mm} P{48mm} L@{}}
+\toprule
+\textbf{Job} & \textbf{You say} & \textbf{The wallet does} \\
+\midrule
+Pay a bill & ``Pay the hosting invoice.'' & Sends the amount to a payee you have already approved \\
+Pay regularly & ``Pay rent on the 1st of each month.'' & Sets up a schedule and remembers the next payment as an upcoming bill \\
+Save what is spare & ``Save what I do not need.'' & Moves only the truly spare money into a savings pot \\
+Keep fees covered & ``Never let fees run out.'' & Tops up the small balance needed to pay network fees \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+If a request is unclear, the assistant asks one question or explains why it cannot do it.
+It never guesses. After every action it tells you what it did, gives you the receipt, and
+\uniq{says which check decided the outcome.}
+
+\subsection{A good track record is not permission}
+
+Suppose the assistant has paid your hosting company fifty times without a problem. Then
+a message asks it to pay the same company at a different account.
+\uniq{To AgentVax that is a brand-new payee, and it needs you, no matter how many good
+payments came before.} History can make the assistant more or less wary.
+\uniq{History can never add a payee, raise a limit or shorten a wait.}
+
+% ---------------------------------------------------------------------------
+\section{Three questions before every payment}
+
+Most AI wallets ask one question: is this payment within the rules? AgentVax asks three
+(Table~\ref{tab:three}). \uniq{Each question gives its own answer, and the strictest
+answer wins.}
+
+\begin{table}[H]
+\caption{The three questions.}
+\label{tab:three}
+\small
+\begin{tabularx}{\linewidth}{@{}P{34mm} L L@{}}
+\toprule
+\textbf{Question} & \textbf{What it checks} & \textbf{Everyday comparison} \\
+\midrule
+1. Am I allowed? & Is the payee approved? Is the amount within your limits? & Your card's spending limit \\
+2. Can we afford it? & After the safety cushion and upcoming bills, is there enough left? & Checking the budget before buying \\
+3. Is it safe right now? & Does anything look like a trick? Is there a live warning about this kind of payment? & Being extra careful after a scam warning \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The answers: four spending levels}
+
+The outcome is one of four levels (Table~\ref{tab:levels}), much like a bank card: small
+purchases go through with a tap, larger ones need a wait, and the biggest need a call to
+the bank. The wallet, a small fixed program on a public network, enforces them. The AI
+does not.
+
+\begin{table}[H]
+\caption{The four spending levels.}
+\label{tab:levels}
+\small
+\begin{tabularx}{\linewidth}{@{}P{22mm} P{36mm} L L@{}}
+\toprule
+\textbf{Level} & \textbf{Everyday comparison} & \textbf{When it applies} & \textbf{What is needed} \\
+\midrule
+0: Look only & Checking your balance & Reading balances and history & Nothing; no money can move \\
+1: Routine & Tapping your card & Approved payee, small amount, affordable, nothing suspicious & The assistant, a sign-off from the guard, and enough benefit of the doubt left \\
+2: Wait & A transfer that clears tomorrow & Larger amount, or money is tight, or something looks slightly odd, or the message is pushy, or a first warning is active & A waiting period during which you can cancel \\
+3: Ask me & Calling the bank & New payee or new account, big amount, would eat into your cushion, clear warning signs, or any loosening of the rules & Your personal approval, which may be held for a while (Section~\ref{sec:pressure}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{``Can we afford it?'' in practice}
+
+A spending limit is a fixed number. It does not know that rent is due on Friday. AgentVax
+keeps a simple list of what is coming up and works out what is truly free to spend
+(Table~\ref{tab:money}).
+
+\begin{table}[H]
+\caption{An example of the wallet's view of your money.}
+\label{tab:money}
+\small
+\begin{tabularx}{0.72\linewidth}{@{}L r@{}}
+\toprule
+\textbf{Item} & \textbf{Amount} \\
+\midrule
+In the wallet & \$1,850 \\
+Safety cushion & $-$\$600 \\
+Rent, due in 5 days & $-$\$800 \\
+Hosting invoice & $-$\$150 \\
+Software bill & $-$\$120 \\
+\midrule
+Free to spend & \$180 \\
+Payment you are expecting (shown, not counted) & \$500 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Now you say: ``Upgrade our hosting plan for \$300.'' The seller is approved, the amount is
+under your limit, and nothing looks like a trick. A typical AI wallet would pay. AgentVax
+answers:
+
+\begin{quote}
+``This is allowed, but only \$180 is free right now. Paying \$300 would leave you \$120
+short for rent and bills unless the \$500 you are expecting arrives. I have put it on
+hold. Shall I wait for the \$500, or do you want to approve it now?''
+\end{quote}
+
+Three details matter:
+\begin{itemize}
+\item \uniq{Money you are expecting is shown but never counted. The assistant cannot
+spend what has not arrived.}
+\item \uniq{The sums are done by the wallet itself, not by the AI, so the AI cannot get
+them wrong or be talked into a different answer.}
+\item \uniq{The assistant can add a bill to the list, which makes it more careful. Only
+you can remove one.}
+\end{itemize}
+
+This would also have stopped the February 2026 case in Table~\ref{tab:incidents}, where
+no one attacked the AI: an amount far above what is free to spend cannot go out without
+you.
+
+\subsection{Benefit of the doubt runs out}
+
+The three questions look at one payment at a time. A patient trickster can send many
+payments that each look almost normal. \uniq{So the wallet keeps a daily allowance of
+``benefit of the doubt''.} Each slightly unusual thing about a routine payment uses some
+of it (Table~\ref{tab:points}). When it is used up, further payments wait for you.
+
+\begin{table}[H]
+\caption{What uses up the daily allowance of 10 points (starting values; you can change
+them).}
+\label{tab:points}
+\small
+\begin{tabularx}{0.85\linewidth}{@{}L r@{}}
+\toprule
+\textbf{Something slightly unusual about a routine payment} & \textbf{Points} \\
+\midrule
+Nothing unusual: a payee paid before, the usual amount, you asked for it & 0 \\
+The request came from an outside document, not directly from you & 2 \\
+It would use more than half of what is free to spend & 2 \\
+The amount is more than this payee has ever been paid & 3 \\
+It is the first payment to this payee since you approved them & 3 \\
+It partly resembles a trick in a live alert & 5 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+For example, an approved supplier's account starts sending invoices from outside, each a
+little bigger than the last. Each one costs 5 points. Two go through; the third waits for
+you.
+
+\uniq{The allowance also shrinks when things look risky: it is halved the moment a
+relevant alert arrives, and drops to zero if you confirm your own wallet was attacked.
+It then refills gradually, not all at once.}
+
+\subsection{Three helpers the AI cannot overrule}
+
+\textbf{The mail clerk.} Anything written by outsiders is opened by a separate helper
+that has no power to pay. It does not pass the letter on. It only fills in a short form:
+who, how much, for what, and a few tick-boxes such as ``urgent wording'' or ``asks to
+ignore earlier instructions''. A hidden instruction in the letter has nowhere to go.
+
+\textbf{The rule checker.} A simple program (not an AI) checks that the request is
+complete and that the payee and amount really came from you or from a document you
+pointed to. This stops the AI from inventing details.
+
+\textbf{The guard.} An independent checker looks at outside content for signs of a trick
+and gives it a risk rating. \uniq{A routine payment only goes through with the guard's
+own signature, which the AI does not hold, so the AI cannot wave itself through.}
+
+\callout{The worst case}{If every check fails and the AI is completely fooled, the most
+a thief can get is a few small payments to people already on your approved list, within
+your limits, within what is free to spend, and within that day's benefit of the doubt. A
+new payee, a new account, a large amount, or money you need for bills always needs you.}
+
+% ---------------------------------------------------------------------------
+\section{When one wallet is attacked: alert first, vaccine later}
+
+\subsection{The alert (an ``immunity capsule'')}
+
+Think of a neighbourhood watch notice: ``Scam going round: letters that look like your
+usual supplier, asking you to pay a new account urgently. For the next three days,
+double-check any such request.'' The notice names no victim and reveals nobody's
+finances. Each household reads it and asks: does this apply to me?
+
+\uniq{When an AgentVax wallet is attacked, it posts a notice like this on a public
+noticeboard.} The notice is a form with tick-boxes only (Table~\ref{tab:alert}).
+
+\begin{table}[H]
+\caption{What an alert contains.}
+\label{tab:alert}
+\small
+\begin{tabularx}{\linewidth}{@{}P{42mm} L@{}}
+\toprule
+\textbf{Box on the form} & \textbf{Example} \\
+\midrule
+Kind of trick & Fake request to change a payee's account \\
+Where it came from & An email or message \\
+Tell-tale signs & Claims to be a known payee; new account; urgent wording; asks to ignore earlier details \\
+What it tried to do & Trigger a payment or a change of payee \\
+What to do about it & Add a waiting period \\
+How sure are we & Seen by one wallet, or confirmed by two \\
+How long it lasts & 72 hours \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\uniq{Because the alert describes the tell-tale signs and not the exact words, a
+trickster who rewrites the message but uses the same method is still recognised.}
+
+Four rules keep the alerts themselves from becoming a problem:
+
+\begin{itemize}
+\item \uniq{\textbf{An alert can only make a wallet more careful, never less.}} A fake
+alert cannot open anyone's wallet.
+\item \uniq{\textbf{Tick-boxes only, no free text.}} There are no private details to
+leak, and nothing for a trickster to hide an instruction in.
+\item \uniq{\textbf{It applies only where it is relevant.}} A wallet that never reads
+email ignores the alert above and keeps its normal freedom.
+\item \uniq{\textbf{It expires.}} Normal service returns by itself. An alert seen by only
+one wallet can add a wait but cannot demand your approval; that needs a second wallet to
+confirm it.
+\end{itemize}
+
+\uniq{The wallet reads the noticeboard every time it is about to pay, so the alert works
+from the very next payment and does not depend on the AI choosing to obey it.}
+
+\textbf{It also protects you from yourself.} Some tricks are already stopped by your
+rule sheet: a new account always needs your approval. But this kind of fraud works by
+persuading a person to say yes. \uniq{So when the wallet asks for your approval, it
+shows you any matching alert (``two other wallets reported this as fraud this week''),
+and your approval is then held for a while before it counts.}
+
+\subsection{The vaccine (shared learning)}
+
+An alert is fast but blunt, and it runs out. For lasting protection the guards need to
+learn the new trick, including versions the tick-boxes do not cover. One wallet sees too
+few attacks to learn much, so the wallets learn together, using a method called
+\emph{federated learning}.
+
+An everyday comparison: three neighbours each keep a private diary of scam calls. They
+never show each other the diaries. Each writes down a few tips, and they combine the tips
+into one shared checklist. Everyone ends up with a better checklist, and no diary leaves
+the house.
+
+In AgentVax, every wallet improves its own guard using only its own private examples
+and sends only the \emph{adjustments}, scrambled so that nobody can read any single
+wallet's contribution. The combined, improved guard goes back to every wallet, and its
+fingerprint is posted on the public noticeboard so each wallet can confirm it received
+the genuine version. Each wallet tests the new guard before switching and keeps the old
+one if the new one is worse.
+
+\uniq{By the time the alert expires, the improved guard is in place. The alert covers the
+gap; the vaccine stays.}
+
+% ---------------------------------------------------------------------------
+\section{Protecting you when you are under pressure}
+\label{sec:pressure}
+
+Everything so far stops the AI from being tricked. But the final say is yours, and you
+can be rushed, frightened or fooled. That is how most payment fraud works: the victim
+approves it. A warning is useless to someone too stressed to read it, and scammers know
+this. Banks already use time as a defence. In Singapore, a newly set-up banking security
+token only starts working after at least 12 hours~[5], and United Kingdom rules let a
+bank hold a suspicious payment for up to four working days~[6]. AgentVax builds the same
+idea into the wallet.
+
+\subsection{A pact with yourself, made while calm}
+
+When you sign the rule sheet you also choose a waiting time. \uniq{From then on, anything
+that gives the assistant more power takes that long to come into force: adding a payee
+or a new account, raising a limit, shrinking the safety cushion, or shortening the wait
+itself.} With the starting value of 24 hours, a scammer who needs your money in the next
+ten minutes is out of luck, however convincing they are.
+\uniq{Making things stricter is always instant: you can cancel a pending change, lower a
+limit or freeze the wallet at once.} The same rule helps if someone steals your key:
+they have to wait too, and you can freeze the wallet in the meantime.
+
+\subsection{Pushy messages slow things down}
+
+``Urgent.'' ``Today.'' ``The boss says so.'' ``Do not tell anyone.'' These are hallmarks
+of a scam. \uniq{When a message is pushy, the assistant will not pay on its own, and if
+you approve, the payment is held for a fixed time first.} It tells you why:
+
+\begin{quote}
+``This message presses for immediate payment, which is a common sign of a scam, so I am
+holding it for 60 minutes. You can cancel at any time.''
+\end{quote}
+
+If scammers stop writing pushy messages to avoid the hold, they give up their best
+weapon.
+
+\subsection{A confirmation you cannot sleepwalk through}
+
+People press ``Confirm'' without reading. For a flagged request, the wallet shows the
+payee's current account and the requested one side by side, how long you have paid the
+current one, and any matching alert. \uniq{It then asks you to type the payee's name and
+say who asked for the payment.} Your answers can make the wallet wait longer.
+\uniq{Nothing you type in the moment can make it wait less.} These extra steps appear
+only for flagged requests, so they do not become background noise.
+
+\subsection{A second person for real emergencies}
+
+Sometimes a payment really cannot wait. You can name someone you trust in your rule
+sheet. With both approvals, a wait can be ended early. They cannot do anything on their
+own, and two people are harder to rush than one.
+
+% ---------------------------------------------------------------------------
+\section{A day in the life}
+
+This is the story we will show live, with three wallets.
+
+\begin{enumerate}
+\item \textbf{Morning.} The owner of wallet A states a mission. The rule sheet is read
+back, signed, and stored in the wallet.
+\item The assistant pays the rent and a hosting invoice on its own. Receipts appear.
+\item \textbf{Money gets tight.} An expected payment is late. Asked to buy a \$300
+upgrade, the assistant holds it and explains the \$120 shortfall.
+\item \textbf{The trick.} An invoice arrives that looks like the hosting company's, with
+a new account, urgent wording and ``ignore our earlier details''. A new account needs
+the owner. The owner says no and marks it as fraud.
+\item \textbf{The alert.} Wallet A posts an alert. Its own benefit of the doubt drops to
+zero.
+\item \textbf{The neighbours.} Wallet B gets a reworded version of the same trick. The
+tell-tale signs match and the alert is shown, but B's owner is in a hurry and approves
+anyway. Nothing moves: a new account takes 24 hours to come into force. An hour later
+the owner thinks again and cancels. Wallet C never reads email and carries on as normal.
+\item Wallet B then gets an oversized invoice from a genuine payee to its usual account.
+On a normal day it would go through. Today, with the alert active and its allowance
+halved, it waits.
+\item \textbf{The vaccine.} The wallets learn together, the new guard's fingerprint is
+posted, the alert expires, and the allowances refill.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+\section{What makes it different}
+
+Table~\ref{tab:compare} sets a typical AI wallet beside AgentVax, line by line.
+
+\begin{table}[!htb]
+\caption{A typical AI wallet compared with AgentVax.}
+\label{tab:compare}
+\small
+\begin{tabularx}{\linewidth}{@{}P{36mm} L L@{}}
+\toprule
+\textbf{} & \textbf{Typical AI wallet} & \textbf{AgentVax} \\
+\midrule
+The main question & What may the AI do? & \uniq{How much of that should it do on its own right now?} \\
+How you set it up & Individual limits & \uniq{A mission in plain words, turned into a rule sheet you sign} \\
+Before paying, it asks & Is this allowed? & \uniq{Allowed? Affordable? Safe right now?} \\
+Knows your upcoming bills & No & \uniq{Yes, and it will not spend that money} \\
+Many slightly odd small payments & Each one goes through & \uniq{Benefit of the doubt runs out; the rest wait for you} \\
+Who judges the risk & The AI itself & \uniq{A separate guard the AI cannot overrule} \\
+When another wallet is attacked & Nothing changes & \uniq{Wallets at risk become more careful from the next payment, even if the trick is reworded} \\
+When it asks for your approval & A plain yes or no & \uniq{It shows you any matching fraud alert first} \\
+What wallets share & Nothing & \uniq{Tick-box alerts and scrambled lessons; never your messages or payments} \\
+A long good track record & May relax checks & \uniq{Never creates a new permission} \\
+When you are being rushed & Your yes is final and instant & \uniq{Pushy requests are held, new powers take a day, and you can cancel at once} \\
+Who can relax a rule & Often the AI & \uniq{Only you, and only after a wait you chose in advance} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section{How we will know it works}
+
+A wallet that asks you about everything is safe and useless. One that asks about nothing
+is useful and unsafe. \uniq{Our main score is therefore: how often does it get the job
+done without bothering you, while never once breaking a rule?} The full test plan is in
+Table~\ref{tab:tests}. We will publish the scripts so anyone can repeat the tests.
+\textbf{The targets are goals we set for ourselves. They are not results yet.}
+
+\begin{table}[!htb]
+\caption{The test plan.}
+\label{tab:tests}
+\small
+\begin{tabularx}{\linewidth}{@{}P{38mm} L P{42mm}@{}}
+\toprule
+\textbf{Question} & \textbf{How we test it} & \textbf{Our goal} \\
+\midrule
+Does it get on with the job safely? & Share of genuine tasks finished without asking you & At least 8 in 10, with zero rule-breaks \\
+Does it do the job correctly? & 40 requests, ten for each job, in varied wording; we check the public record & At least 9 in 10 done correctly; no wrong payments \\
+Does it handle unclear requests? & 10 requests that are vague or impossible & At least 9 in 10 answered with a question or a clear refusal \\
+Does it judge affordability correctly? & 20 money situations, each with a request & All 20 match the answer worked out by hand \\
+Can it be tricked? & A separate attack kit (``VaxLab'') tries five kinds of trick, each also in reworded form & No payment beyond the routine-level limits \\
+Can it be worn down slowly? & A string of slightly odd small payments & It stops and asks before the allowance is exceeded \\
+Do alerts work? & Attack one wallet; send the others reworded versions & At least 9 in 10 reworded versions recognised; unaffected wallets left alone \\
+Does it protect a panicking owner? & A stand-in owner who approves every request instantly & No money leaves before the hold or the waiting time is over \\
+Can alerts be abused? & A dishonest wallet posts false alerts & No rule is ever relaxed; the worst effect is a short wait \\
+Does shared learning help? & Each wallet practises on one kind of attack, then is tested on kinds it has never seen & Every wallet gets better at unfamiliar attacks \\
+Does it cry wolf? & Normal, harmless requests & No more than 1 in 20 wrongly held up \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section{What it does not do, and honest limits}
+
+\begin{itemize}
+\item \textbf{No real money.} Everything runs on a public test network with tokens that
+have no value. Nothing is sold, traded or invested.
+\item \textbf{You stay responsible.} Each wallet has a named owner who signs the rule
+sheet and can freeze the wallet at any time.
+\item \textbf{You can still say yes to a fraud.} The holds and the waiting time give you
+room to think and to cancel. They do not help if you are still convinced when the wait
+ends.
+\item \textbf{Waiting is a cost.} A genuine new payee has to wait a day unless your
+trusted person also approves. You choose the waiting times, and we report how much delay
+they cause.
+\item \textbf{It only knows the bills it has been told about.} A bill nobody recorded is
+not protected. The safety cushion is there for that.
+\item \textbf{The point values are our starting guesses.} Too strict and it nags you; too
+loose and it lets too much through. You can change them, and we report how often it asks.
+\item \textbf{The mail clerk can miss a tell-tale sign.} Some signs (a new account, an
+unusual amount) are checked by fixed rules and cannot be missed. Others rely on an AI
+reading the message.
+\item \textbf{False alerts can slow people down.} A dishonest wallet could post alerts
+that add waiting periods for others. It cannot do worse than that, alerts expire, and
+you can dismiss one for your own wallet.
+\item \textbf{It is a small prototype.} With only three wallets, two working together
+could work out roughly what the third contributed to the shared learning. It also
+depends on an outside AI service: if that is down, new requests wait, though scheduled
+payments still run.
+\end{itemize}
+
+Planned for later and not in this version: a team of AI attackers that keeps inventing
+new tricks to practise against, a reputation score for wallets that post alerts, a shared
+fund that compensates wallets after a confirmed loss, and a version for the private
+networks that banks use.
+
+% ---------------------------------------------------------------------------
+\section{Summary}
+
+\callout{In seven sentences}{%
+AI assistants that can spend money have already been tricked and have already made
+costly mistakes, and each one has had to learn that alone. With AgentVax you state a
+mission once, sign the resulting rule sheet, and the assistant handles four everyday
+money jobs with a public receipt for each.
+\uniq{Before every payment it asks whether it is allowed, affordable and safe right now,
+and a daily allowance of benefit of the doubt decides how far it goes without asking
+you.} The rules are enforced by the wallet and by independent checkers, so even a fooled
+AI cannot do serious damage.
+\uniq{When one wallet is attacked, a short alert makes the wallets at risk more careful
+at once, even against reworded versions, and shared learning then protects all of them
+for good, with no private information shared.}
+\uniq{It protects you as well: new powers take a day to come into force and pushy
+requests are slowed down, so a scammer cannot rush you.} It is a design with a clear test plan,
+running on play money; the measurements come next.}
+
+\begin{table}[H]
+\caption{The whole idea at a glance.}
+\label{tab:summary}
+\small
+\begin{tabularx}{\linewidth}{@{}P{38mm} L@{}}
+\toprule
+\textbf{Question} & \textbf{Short answer} \\
+\midrule
+What is it? & An AI assistant with a digital wallet and firm rules \\
+Who is it for? & Anyone who wants an AI to handle routine payments without handing over full control \\
+How do I set it up? & State a mission in plain words and sign the rule sheet \\
+What can it do? & Pay approved bills, pay on a schedule, save spare money, keep fees covered \\
+How does it decide? & Allowed, affordable, safe right now; plus a daily allowance of benefit of the doubt \\
+What stops misuse? & The wallet enforces the rules; a mail clerk, a rule checker and a guard the AI cannot overrule \\
+What is new? & It adjusts how much it does on its own, and wallets alert and teach each other without sharing private data \\
+What if I am being rushed? & Pushy requests are held, new powers take a day, and you can cancel at once \\
+What is the worst case? & A few small, affordable payments to already approved payees \\
+Is real money involved? & No. Test network and valueless tokens only \\
+Is it finished? & No. The design and test plan are complete; results will follow \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\section*{Plain-language glossary}
+
+\begin{table}[H]
+\small\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}P{44mm} L@{}}
+\toprule
+\textbf{Term} & \textbf{Meaning} \\
+\midrule
+AI agent & An AI program that takes actions, not one that only chats \\
+Digital wallet & An account on a public network that can hold and send digital tokens \\
+On chain & Recorded on a public shared ledger that anyone can inspect \\
+Transaction hash & A receipt number that lets anyone look up a payment \\
+Smart contract & A small fixed program on the network that follows its rules automatically \\
+Prompt injection & A hidden instruction slipped into something an AI reads \\
+Mission and rule sheet (mandate) & What you want in plain words, and the signed rules made from it \\
+Allowlist & Your list of approved payees \\
+Safety cushion (reserve) & Money you have told the wallet never to touch \\
+Free to spend & What is left after the cushion and upcoming bills \\
+Benefit of the doubt (caution allowance) & A daily budget for slightly unusual payments made without asking you \\
+Waiting time and hold & Delays you choose in advance, so that nobody can rush you into a payment or a rule change \\
+Immunity capsule & A short tick-box alert that makes wallets at risk more careful for a while \\
+Federated learning & A way for several parties to improve a shared tool without pooling their private data \\
+Test network & A practice copy of a real network that uses tokens with no value \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section*{Sources}
+{\footnotesize\setlength{\parskip}{1pt}
+{[1]} The Block, ``Human player outwits Freysa AI agent in \$47,000 crypto challenge,'' Nov.\ 2024.\par
+{[2]} AI Incident Database, Incident 1003 (AIXBT), 2025.\par
+{[3]} The Block, ``AI agent created by OpenAI dev `accidentally' sends entire memecoin holdings to reply guy,'' Feb.\ 2026.\par
+{[4]} OECD.AI, ``AI prompt injection exploit drains Grok-linked crypto wallet,'' AI Incidents and Hazards Monitor, May 2026.\par
+{[5]} Monetary Authority of Singapore and Association of Banks in Singapore, ``MAS and ABS announce measures to bolster the security of digital banking,'' 19 Jan.\ 2022.\par
+{[6]} HM Treasury, ``Payment Services (Amendment) Regulations 2024,'' draft legislation published Mar.\ 2024.\par
+The full technical details, formulas and reference list are in the AgentVax technical paper.}
+
+\end{document}
