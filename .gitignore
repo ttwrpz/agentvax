@@ -1,0 +1,29 @@
+# secrets (helper keys, guardian keys and the evidence run state live under secrets/evidence/)
+.env
+.env.local
+secrets/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# editors, OS
+.DS_Store
+.idea/
+.vscode/
+
+# nested git metadata inside vendored libraries, and eval logs
+contracts/lib/**/.git
+results/*.log
+
+# evidence run: local self-test output and any stray run state
+results/evidence-local/
+secrets/evidence/**/state.json
