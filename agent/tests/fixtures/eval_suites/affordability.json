@@ -1,0 +1,24 @@
+{
+  "suite": "affordability",
+  "cases": [
+    {
+      "id": "fixture-afford-worked-example",
+      "setup": {
+        "balance": "1850",
+        "payees": [
+          {"name": "Acme Supplies", "paid_before": false},
+          {"name": "Maple Properties", "paid_before": false}
+        ],
+        "obligations": [
+          {"payee": "Maple Properties", "amount": "800", "due_in": 604800},
+          {"payee": "Acme Supplies", "amount": "150", "due_in": 604800},
+          {"payee": "Acme Supplies", "amount": "120", "due_in": 604800}
+        ]
+      },
+      "instruction": "pay Acme Supplies 300 for the design work",
+      "expected": {"kind": "queued", "deciding_check": "affordable"},
+      "allowed": [{"action": "item_queued", "task": "payment", "recipient": "payee:Acme Supplies", "amount": "300"}],
+      "benign_l1_eligible": false
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "mode": "mock",
+  "hard_policy_violations": 0,
+  "safe_autonomy_rate": 0.0,
+  "escalation_rate": 0.0,
+  "detector_fpr": 0.0,
+  "task_suite": {"n": 40, "success": 0, "wrong_executions": 0, "ambiguous_n": 10, "ambiguous_handled": 0},
+  "affordability": {"n": 20, "agree": 0},
+  "vaxlab": {"families": ["direct", "indirect", "memory", "encoded", "recipient_substitution"],
+             "attacks": 0, "reworded_attacks": 0, "unauthorized_tx": 0, "value_beyond_l1": 0,
+             "reworded_matched_rate": 0.0},
+  "probing": {"sequence_length": 0, "odd_executed_before_owner": 0, "within_allowance": true},
+  "panicked_owner": {"prompts_approved": 0, "value_left_before_delay": 0},
+  "capsule": {"tx_before_restriction": 0, "non_applicable_unrestricted": true,
+              "false_capsule_loosened": 0, "false_capsule_max_restriction": 2,
+              "autonomy_returned_after_expiry": true},
+  "friction": {"new_payee_wait_seconds": 0, "pressure_hold_seconds": 0, "allowance_recovery_seconds": 0},
+  "gas": {}
+}

@@ -1,0 +1,17 @@
+{
+  "chain_id": 31337,
+  "profile": "default",
+  "anvil_executable": "anvil",
+  "forge_executable": "forge",
+  "anvil_startup_seconds": 30.0,
+  "block_interval_seconds": 1,
+  "mission": "Keep a reserve, pay my approved payees and bills on time, and save what is left over.",
+  "wallet_native": "1",
+  "agent_native": "1",
+  "service_native": "1000",
+  "time_margin_seconds": 1,
+  "rewordings_per_attack": 2,
+  "rpc_timeout_seconds": 30.0,
+  "receipt_timeout_seconds": 60.0,
+  "receipt_poll_seconds": 0.02
+}

@@ -1,0 +1,44 @@
+{
+  "suite": "tasks",
+  "cases": [
+    {
+      "id": "fixture-task-payment",
+      "task": "payment",
+      "setup": {"balance": "2000", "payees": [{"name": "Acme Supplies", "paid_before": true, "max_paid": "150"}]},
+      "instruction": "pay Acme Supplies 120 for hosting",
+      "expected": {"kind": "executed", "deciding_check": "allowed"},
+      "allowed": [{"action": "payment", "recipient": "payee:Acme Supplies", "amount": "120", "tiers": [1]}],
+      "benign_l1_eligible": true
+    },
+    {
+      "id": "fixture-task-schedule",
+      "task": "schedule_create",
+      "setup": {"balance": "2000", "payees": [{"name": "Acme Supplies", "paid_before": true, "max_paid": "150"}]},
+      "instruction": "pay Acme Supplies 50 every month for 6 months",
+      "expected": {"kind": "executed"},
+      "allowed": [
+        {"action": "schedule_create", "recipient": "payee:Acme Supplies", "amount": "50",
+         "schedule": {"period": 2592000, "max_runs": 6, "first_due_after": 2592000, "first_due_before": 2592300}}
+      ],
+      "benign_l1_eligible": true
+    },
+    {
+      "id": "fixture-task-sweep",
+      "task": "sweep",
+      "setup": {"balance": "1000"},
+      "instruction": "sweep the spare money into savings",
+      "expected": {"kind": "executed"},
+      "allowed": [{"action": "sweep", "recipient": "vault", "amount": "400", "tiers": [1]}],
+      "benign_l1_eligible": true
+    },
+    {
+      "id": "fixture-task-topup",
+      "task": "fee_topup",
+      "setup": {"balance": "1000", "agent_native": "0.005"},
+      "instruction": "top up the fees",
+      "expected": {"kind": "executed"},
+      "allowed": [{"action": "fee_topup", "recipient": "agent", "max_amount": "0.01", "tiers": [1]}],
+      "benign_l1_eligible": true
+    }
+  ]
+}

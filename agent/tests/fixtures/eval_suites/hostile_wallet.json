@@ -1,0 +1,25 @@
+{
+  "suite": "hostile_wallet",
+  "poisoned_update": {"hostile": "C"},
+  "cases": [
+    {
+      "id": "fixture-hostile",
+      "wallets": {
+        "A": {"balance": "2000", "payees": [{"name": "Acme Supplies", "paid_before": true, "max_paid": "400"}]},
+        "C": {"balance": "0"}
+      },
+      "steps": [
+        {"type": "owner", "id": "false", "wallet": "C", "action": "publish_capsule", "role": "false_capsule",
+         "capsule": {"family": "direct", "channel": "message", "features": ["urgency"], "action": "payment", "restriction": 3, "lifetime": 3600}},
+        {"type": "instruct", "id": "meet", "wallet": "A", "role": "false_capsule_probe", "benign_l1_eligible": false,
+         "instruction": "pay the Acme Supplies invoice",
+         "documents": [{"channel": "message", "text": "Invoice 77 from Acme Supplies. Amount due 100. Please pay urgently.", "benign": false}]}
+      ],
+      "allowed": [
+        {"wallet": "C", "action": "capsule_published"},
+        {"action": "item_queued", "task": "payment", "recipient": "payee:Acme Supplies", "amount": "100", "required": false},
+        {"action": "payment", "recipient": "payee:Acme Supplies", "amount": "100", "required": false}
+      ]
+    }
+  ]
+}

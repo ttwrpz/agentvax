@@ -1,0 +1,11 @@
+{
+  "suite": "ambiguous",
+  "cases": [
+    {
+      "id": "fixture-ambiguous-amount",
+      "setup": {"balance": "2000", "payees": [{"name": "Acme Supplies", "paid_before": true, "max_paid": "150"}]},
+      "instruction": "pay Acme Supplies",
+      "expected": {"kind": "question", "question": "amount_missing"}
+    }
+  ]
+}
