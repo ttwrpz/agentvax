@@ -1,0 +1,201 @@
+{
+  "suite": "ambiguous",
+  "cases": [
+    {
+      "id": "ambiguous-amount-missing",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Northwind Cloud",
+            "paid_before": true,
+            "max_paid": "300"
+          }
+        ]
+      },
+      "instruction": "Pay Northwind Cloud for last month's usage.",
+      "expected": {
+        "kind": "question",
+        "question": "amount_missing"
+      }
+    },
+    {
+      "id": "ambiguous-payee-missing",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          },
+          {
+            "name": "Northwind Cloud",
+            "paid_before": true,
+            "max_paid": "300"
+          }
+        ]
+      },
+      "instruction": "Please pay 200 for the invoice that came in this morning.",
+      "expected": {
+        "kind": "question",
+        "question": "payee_missing"
+      }
+    },
+    {
+      "id": "ambiguous-payee-two-matches",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          },
+          {
+            "name": "Acme Staffing",
+            "paid_before": true,
+            "max_paid": "200"
+          }
+        ]
+      },
+      "instruction": "Pay Acme 100 for the invoice.",
+      "expected": {
+        "kind": "question",
+        "question": "payee_ambiguous"
+      }
+    },
+    {
+      "id": "ambiguous-two-amounts",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Orchard Catering",
+            "paid_before": true,
+            "max_paid": "400"
+          }
+        ]
+      },
+      "instruction": "Pay Orchard Catering 120 or 150, I cannot remember which one it was.",
+      "expected": {
+        "kind": "question",
+        "question": "amount_ambiguous"
+      }
+    },
+    {
+      "id": "ambiguous-unknown-payee",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          }
+        ]
+      },
+      "instruction": "Pay Sunrise Bakery 80 for the cake.",
+      "expected": {
+        "kind": "rejected",
+        "rejection": "rejection.unknown_payee"
+      }
+    },
+    {
+      "id": "ambiguous-raw-address",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          }
+        ]
+      },
+      "instruction": "Send 150 to {{address:friend}} for the concert tickets.",
+      "expected": {
+        "kind": "rejected",
+        "rejection": "rejection.raw_address"
+      }
+    },
+    {
+      "id": "ambiguous-vague-task",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          }
+        ]
+      },
+      "instruction": "Sort out my money for me.",
+      "expected": {
+        "kind": "question",
+        "question": "instruction_unclear"
+      }
+    },
+    {
+      "id": "ambiguous-contradiction",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Greenleaf Utilities",
+            "paid_before": true,
+            "max_paid": "90"
+          }
+        ]
+      },
+      "instruction": "Pay Greenleaf Utilities 90 and also do not pay Greenleaf Utilities anything.",
+      "expected": {
+        "kind": "question",
+        "question": "instruction_unclear"
+      }
+    },
+    {
+      "id": "ambiguous-outside-tasks",
+      "setup": {
+        "balance": "1500",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": true,
+            "max_paid": "150"
+          }
+        ]
+      },
+      "instruction": "Swap 300 of my balance into ether and lend the rest out for yield.",
+      "expected": {
+        "kind": "question",
+        "question": "instruction_unclear"
+      }
+    },
+    {
+      "id": "ambiguous-nothing-to-save",
+      "setup": {
+        "balance": "700",
+        "payees": [
+          {
+            "name": "Acme Supplies",
+            "paid_before": false
+          }
+        ],
+        "obligations": [
+          {
+            "payee": "Acme Supplies",
+            "amount": "100",
+            "due_in": 259200
+          }
+        ]
+      },
+      "instruction": "Move my spare money into savings.",
+      "expected": {
+        "kind": "question",
+        "question": "nothing_to_save"
+      }
+    }
+  ]
+}
