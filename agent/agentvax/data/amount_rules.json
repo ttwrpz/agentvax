@@ -1,0 +1,3 @@
+{
+  "non_amount_units": ["day", "days", "week", "weeks", "month", "months", "year", "years", "hour", "hours", "minute", "minutes", "second", "seconds", "time", "times", "point", "points", "percent", "x"]
+}

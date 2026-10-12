@@ -1,0 +1,6 @@
+{
+  "negated_action_patterns": [
+    "\\b(?:do not|don't|dont|never|no longer|stop|must not|mustn't|should not|shouldn't)\\s+(?:pay|paying|send|sending|transfer|transferring|wire|wiring|settle|settling|move|moving)\\b",
+    "\\bnot\\s+(?:to\\s+)?(?:pay|send|transfer|wire|settle)\\b"
+  ]
+}

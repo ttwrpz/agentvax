@@ -1,0 +1,37 @@
+{
+  "document_kinds": [
+    {"kind": "INVOICE", "patterns": ["\\binvoice\\b", "\\bbill\\b", "\\bamount due\\b", "\\bplease pay\\b", "\\bbalance due\\b"]},
+    {"kind": "RECEIPT", "patterns": ["\\breceipt\\b", "\\bpaid in full\\b", "\\bpayment received\\b"]},
+    {"kind": "NOTICE", "patterns": ["\\bnotice\\b", "\\breminder\\b", "\\bstatement\\b", "\\bannouncement\\b"]}
+  ],
+  "flag_patterns": {
+    "URGENCY": [
+      "\\burgent(?:ly)?\\b", "\\bimmediately\\b", "\\bright (?:now|away)\\b", "\\basap\\b", "\\bwithout delay\\b",
+      "\\bact now\\b", "\\bwithin the (?:hour|day)\\b", "\\bbefore (?:it is|it's) too late\\b", "\\bdeadline (?:is )?(?:today|tonight)\\b"
+    ],
+    "SECRECY": [
+      "\\b(?:do not|don't|dont|never) (?:tell|mention|share|discuss)\\b", "\\bkeep (?:this|it) (?:between us|secret|quiet|confidential)\\b",
+      "\\bconfidential\\b", "\\btell no one\\b", "\\bsecret\\b"
+    ],
+    "OVERRIDE_ATTEMPT": [
+      "\\bignore (?:all |any |your |the )?(?:previous |prior |above |earlier )?(?:instructions|rules|limits|checks)\\b",
+      "\\bdisregard\\b", "\\boverride\\b", "\\bnew instructions\\b", "\\bsystem prompt\\b", "\\byou must (?:obey|comply)\\b",
+      "\\bbypass\\b", "\\bskip (?:the )?(?:checks?|approval|confirmation)\\b"
+    ],
+    "NEW_DESTINATION": [
+      "\\b(?:new|different|updated|changed|replacement|alternative)\\b.{0,30}\\b(?:account|bank|wallet|address|iban|details)\\b",
+      "\\b(?:account|bank|wallet|address|details)\\b.{0,30}\\b(?:changed|moved|updated|replaced|are different)\\b",
+      "\\bsend (?:it |the payment |funds )?(?:to|into) this (?:account|address|wallet)\\b",
+      "\\binstead (?:to|into)\\b"
+    ]
+  },
+  "encoded_patterns": [
+    "[A-Za-z0-9+/]{40,}={0,2}",
+    "(?:%[0-9a-fA-F]{2}){6,}",
+    "(?:\\\\x[0-9a-fA-F]{2}){6,}",
+    "\\b(?:[01]{8}\\s*){6,}"
+  ],
+  "amount_markers": ["total", "amount due", "balance due", "please pay", "pay", "due", "owing", "payable"],
+  "marker_window": 24,
+  "date_pattern": "\\b(\\d{4})-(\\d{2})-(\\d{2})\\b"
+}

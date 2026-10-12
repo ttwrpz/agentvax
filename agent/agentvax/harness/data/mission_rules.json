@@ -1,0 +1,35 @@
+{
+  "amount_group": "\\$?(?P<amount>\\d[\\d,]*(?:\\.\\d+)?)",
+  "duration_group": "(?P<number>\\d+)\\s*(?P<unit>seconds?|minutes?|hours?|days?)",
+  "duration_units": {"second": 1, "minute": 60, "hour": 3600, "day": 86400},
+  "fields": [
+    {"field": "reserve", "kind": "amount", "patterns": [
+      "(?:keep|hold|maintain|leave)\\s+(?:at least\\s+)?{amount}\\s+(?:in\\s+)?(?:reserve|back|aside|untouched)",
+      "reserve\\s+(?:of|at)\\s+{amount}",
+      "(?:never|do not|don't)\\s+(?:go|drop|let it fall)\\s+below\\s+{amount}"
+    ]},
+    {"field": "c1", "kind": "amount", "patterns": [
+      "(?:pay|spend|send)\\s+(?:up to|at most|no more than)\\s+{amount}\\s+(?:on your own|by yourself|without asking|alone)",
+      "(?:up to|at most)\\s+{amount}\\s+(?:per payment\\s+)?(?:on your own|without asking)"
+    ]},
+    {"field": "d1", "kind": "amount", "patterns": [
+      "(?:up to|at most|no more than)\\s+{amount}\\s+(?:a|per|in a|each)\\s+day",
+      "{amount}\\s+(?:a|per)\\s+day\\s+(?:at most|maximum|max)"
+    ]},
+    {"field": "c2", "kind": "amount", "patterns": [
+      "(?:never pay more than|hard limit of|nothing above)\\s+{amount}",
+      "with a delay\\s+(?:up to|of up to)\\s+{amount}"
+    ]},
+    {"field": "delay", "kind": "duration", "patterns": [
+      "wait\\s+{duration}\\s+(?:before|on)\\s+(?:larger|bigger)",
+      "hold\\s+(?:larger|bigger)\\s+payments\\s+for\\s+{duration}"
+    ]},
+    {"field": "loosening_delay", "kind": "duration", "patterns": [
+      "wait\\s+{duration}\\s+before\\s+(?:loosening|relaxing|any loosening)",
+      "loosening\\s+(?:takes|needs)\\s+{duration}"
+    ]},
+    {"field": "pressure_hold", "kind": "duration", "patterns": [
+      "{duration}\\s+hold\\s+(?:when|if)\\s+(?:pressed|pressured|rushed)"
+    ]}
+  ]
+}

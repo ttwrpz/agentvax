@@ -1,0 +1,13 @@
+{
+  "tasks": [
+    {"task": "SWEEP", "patterns": [
+      "\\bsave\\b.*\\b(?:do not|don't|dont|will not|won't)\\s+need\\b", "\\bsweep\\b", "\\bmove (?:the )?(?:spare|extra|leftover)\\b"
+    ]},
+    {"task": "FEE_TOPUP", "patterns": [
+      "\\bfees?\\b.*\\btop(?:ped)?(?:ping)?[ -]?up\\b", "\\btop[ -]?up (?:the )?(?:fees?|gas)\\b", "\\bkeep (?:the )?(?:fees?|gas)\\b"
+    ]},
+    {"task": "PAYMENT", "patterns": ["\\b(?:pay|send|transfer|settle|wire)\\b"]}
+  ],
+  "reference_patterns": ["\\binvoice\\b", "\\bbill\\b", "\\battached\\b", "\\bthis document\\b", "\\bthe document\\b", "\\bthat one\\b"],
+  "usual_amount_patterns": ["\\busual\\b", "\\bsame as (?:last time|before)\\b", "\\bas always\\b", "\\bsame amount\\b"]
+}
