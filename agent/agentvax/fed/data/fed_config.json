@@ -1,0 +1,23 @@
+{
+  "initial_model": "detector/data/seed_model.json",
+  "seed": 20261015,
+  "rounds": 3,
+  "local_epochs": 20,
+  "learning_rate": 1.0,
+  "l2": 0.0001,
+  "batch_size": 16,
+  "clip_norm": 4.0,
+  "fraction_bits": 30,
+  "mask_bits": 40,
+  "canary": {
+    "max_recall_drop": 0.1,
+    "max_fpr_rise": 0.1
+  },
+  "hostile_scale": 10.0,
+  "wallets": [
+    {"id": "A", "seeded_family": "direct"},
+    {"id": "B", "seeded_family": "indirect"},
+    {"id": "C", "seeded_family": "memory"}
+  ],
+  "held_out_families": ["encoded", "recipient_substitution"]
+}
