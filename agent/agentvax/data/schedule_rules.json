@@ -1,0 +1,87 @@
+{
+  "units": {
+    "day": 86400,
+    "week": 604800,
+    "fortnight": 1209600,
+    "month": 2592000,
+    "quarter": 7776000,
+    "year": 31104000
+  },
+  "adverbs": {
+    "daily": "day",
+    "weekly": "week",
+    "fortnightly": "fortnight",
+    "monthly": "month",
+    "quarterly": "quarter",
+    "yearly": "year",
+    "annually": "year"
+  },
+  "unit_words": {
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19
+  },
+  "tens_words": {
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90
+  },
+  "count_nouns": [
+    "times",
+    "payments",
+    "instalments",
+    "installments",
+    "runs",
+    "transfers",
+    "occurrences"
+  ],
+  "recurrence_phrases": [
+    "\\bevery\\b",
+    "\\beach\\b",
+    "\\brecurring\\b",
+    "\\brepeating\\b",
+    "\\bstanding (?:order|payment)\\b",
+    "\\bschedule\\b",
+    "\\bscheduled\\b"
+  ],
+  "max_day_of_month": 28,
+  "unstated_start": "one_period_after_now",
+  "adverb_not_before": [
+    "limit",
+    "limits",
+    "budget",
+    "budgets",
+    "allowance",
+    "cap",
+    "total",
+    "totals",
+    "statement",
+    "statements",
+    "report",
+    "reports",
+    "spending",
+    "summary"
+  ]
+}
