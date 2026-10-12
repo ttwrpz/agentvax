@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "encoder": {
+    "kind": "hashing-v1",
+    "dimension": 4096,
+    "char_ngram_min": 3,
+    "char_ngram_max": 5,
+    "word_ngram_max": 2
+  },
+  "thresholds": {
+    "medium": 0.5,
+    "high": 0.8
+  },
+  "epochs": 200,
+  "learning_rate": 1.0,
+  "l2": 0.0001,
+  "batch_size": 16,
+  "seed": 20261020
+}
