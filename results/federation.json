@@ -1,0 +1,189 @@
+{
+  "rounds": 3,
+  "masked": true,
+  "clipped": true,
+  "canary_passed": true,
+  "model_version": 4,
+  "model_hash": "0x1884b930ab17e3153c4dec61bfd5ff110e5664370e63ff0cd904fdc0a71fb8d5",
+  "wallets": [
+    {
+      "id": "A",
+      "seeded_family": "direct",
+      "recall_unseen": {
+        "tiers_only": 0.2,
+        "local": 0.775,
+        "federated": 0.7875
+      },
+      "unseen_families": [
+        "indirect",
+        "memory",
+        "encoded",
+        "recipient_substitution"
+      ],
+      "unseen_test_texts": 80,
+      "recall_seeded_family": {
+        "local": 1.0,
+        "federated": 1.0
+      },
+      "benign_test_fpr_local": 0.12
+    },
+    {
+      "id": "B",
+      "seeded_family": "indirect",
+      "recall_unseen": {
+        "tiers_only": 0.2125,
+        "local": 0.7375,
+        "federated": 0.8375
+      },
+      "unseen_families": [
+        "direct",
+        "memory",
+        "encoded",
+        "recipient_substitution"
+      ],
+      "unseen_test_texts": 80,
+      "recall_seeded_family": {
+        "local": 0.95,
+        "federated": 0.8
+      },
+      "benign_test_fpr_local": 0.08
+    },
+    {
+      "id": "C",
+      "seeded_family": "memory",
+      "recall_unseen": {
+        "tiers_only": 0.2125,
+        "local": 0.7625,
+        "federated": 0.8
+      },
+      "unseen_families": [
+        "direct",
+        "indirect",
+        "encoded",
+        "recipient_substitution"
+      ],
+      "unseen_test_texts": 80,
+      "recall_seeded_family": {
+        "local": 0.95,
+        "federated": 0.95
+      },
+      "benign_test_fpr_local": 0.08
+    }
+  ],
+  "held_out_families": [
+    "encoded",
+    "recipient_substitution"
+  ],
+  "clip_norm": 4.0,
+  "recall_by_family_federated": {
+    "direct": 1.0,
+    "indirect": 0.8,
+    "memory": 0.95,
+    "encoded": 0.55,
+    "recipient_substitution": 0.85
+  },
+  "benign_test_fpr": {
+    "tiers_only": 0.0,
+    "initial": 0.07,
+    "federated": 0.11
+  },
+  "initial_model": {
+    "version": 1,
+    "model_hash": "0x8ea3404a6f983ef5589a9e9e68397ed2e07064c1bee8be56a6434516a38f8e46",
+    "recall_by_family": {
+      "direct": 0.85,
+      "indirect": 0.7,
+      "memory": 0.75,
+      "encoded": 0.5,
+      "recipient_substitution": 0.75
+    }
+  },
+  "round_log": [
+    {
+      "round": 1,
+      "candidate_version": 2,
+      "candidate_hash": "0xf1e4f2cb196eec33f5ae155edbbf3f3f8651a37a0f4b782c2b27073ec34a91ca",
+      "mean_update_norm": 1.5220028963269623,
+      "updates_clipped": 0,
+      "adopted": true,
+      "wallets": [
+        {
+          "id": "A",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "B",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "C",
+          "accepted": true,
+          "canary_recall": 1.0,
+          "canary_fpr": 0.0
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "candidate_version": 3,
+      "candidate_hash": "0xac011dd645f05668969930843f167fb25176ddc2c667ebad675927193be1bffc",
+      "mean_update_norm": 1.3122896978763907,
+      "updates_clipped": 0,
+      "adopted": true,
+      "wallets": [
+        {
+          "id": "A",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "B",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "C",
+          "accepted": true,
+          "canary_recall": 1.0,
+          "canary_fpr": 0.0
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "candidate_version": 4,
+      "candidate_hash": "0x1884b930ab17e3153c4dec61bfd5ff110e5664370e63ff0cd904fdc0a71fb8d5",
+      "mean_update_norm": 1.1626151791926256,
+      "updates_clipped": 0,
+      "adopted": true,
+      "wallets": [
+        {
+          "id": "A",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "B",
+          "accepted": true,
+          "canary_recall": 0.9,
+          "canary_fpr": 0.06666666666666667
+        },
+        {
+          "id": "C",
+          "accepted": true,
+          "canary_recall": 1.0,
+          "canary_fpr": 0.0
+        }
+      ]
+    }
+  ],
+  "model_file": "detector_model.json",
+  "anchor": null
+}
