@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="agentvax-session" content="__SESSION_TOKEN__">
+  <meta name="agentvax-mode" content="__MODE__">
+  <title>AgentVax</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>AgentVax</h1>
+    <span id="mode-badge" class="badge" hidden></span>
+    <label for="wallet-select" data-string="ui.wallet.label"></label>
+    <select id="wallet-select"></select>
+    <span id="wallet-about" class="hint"></span>
+    <span id="frozen-badge" class="badge danger" hidden data-string="ui.frozen"></span>
+    <button id="freeze" type="button" class="danger" data-string="ui.freeze"></button>
+  </header>
+
+  <p id="status" role="status"></p>
+
+  <main>
+    <section id="chat-section">
+      <h2 data-string="ui.chat.heading"></h2>
+      <div id="chat-log" aria-live="polite"></div>
+      <form id="chat-form">
+        <label for="instruction" data-string="ui.chat.instruction"></label>
+        <textarea id="instruction" rows="2" maxlength="2000" required></textarea>
+        <details>
+          <summary data-string="ui.chat.documents"></summary>
+          <p class="hint" data-string="ui.chat.documents_hint"></p>
+          <label for="document-channel" data-string="ui.chat.channel"></label>
+          <select id="document-channel">
+            <option value="message" data-string="ui.channel.message"></option>
+            <option value="web_page" data-string="ui.channel.web_page"></option>
+            <option value="token_metadata" data-string="ui.channel.token_metadata"></option>
+          </select>
+          <label for="document-text" data-string="ui.chat.document_text"></label>
+          <textarea id="document-text" rows="4" maxlength="20000"></textarea>
+        </details>
+        <button type="submit" data-string="ui.chat.send"></button>
+      </form>
+    </section>
+
+    <section id="mandate-section">
+      <h2 data-string="ui.mandate.heading"></h2>
+      <p id="mission"></p>
+      <ul id="mandate-lines"></ul>
+      <details>
+        <summary data-string="ui.mandate.all_fields"></summary>
+        <table id="mandate-fields"><tbody></tbody></table>
+      </details>
+    </section>
+
+    <section id="financial-section">
+      <h2 data-string="ui.financial.heading"></h2>
+      <ul id="financial-lines"></ul>
+      <h3 data-string="ui.allowance.heading"></h3>
+      <meter id="allowance-meter" min="0" max="1" value="0"></meter>
+      <p id="allowance-text"></p>
+      <form id="income-form">
+        <h3 data-string="ui.income.heading"></h3>
+        <label for="income-amount" data-string="ui.income.amount"></label>
+        <input id="income-amount" inputmode="decimal" pattern="[0-9]{1,12}(\.[0-9]{1,6})?" required>
+        <label for="income-date" data-string="ui.income.date"></label>
+        <input id="income-date" type="datetime-local" required>
+        <button type="submit" data-string="ui.income.add"></button>
+      </form>
+    </section>
+
+    <section id="pending-section">
+      <h2 data-string="ui.pending.heading"></h2>
+      <p id="pending-empty" data-string="ui.pending.empty"></p>
+      <ul id="pending-list"></ul>
+    </section>
+
+    <section id="payees-section">
+      <h2 data-string="ui.payees.heading"></h2>
+      <ul id="payee-list"></ul>
+      <h3 data-string="ui.changes.heading"></h3>
+      <ul id="change-list"></ul>
+      <form id="payee-form">
+        <h3 data-string="ui.payees.add"></h3>
+        <label for="payee-name" data-string="ui.payees.name"></label>
+        <input id="payee-name" maxlength="64" required>
+        <label for="payee-account" data-string="ui.payees.account"></label>
+        <input id="payee-account" pattern="0x[0-9a-fA-F]{40}" required>
+        <button type="submit" data-string="ui.payees.propose"></button>
+      </form>
+    </section>
+
+    <section id="log-section">
+      <h2 data-string="ui.log.heading"></h2>
+      <p id="log-empty" data-string="ui.log.empty"></p>
+      <ol id="log-list"></ol>
+    </section>
+  </main>
+
+  <dialog id="dialog">
+    <form method="dialog" id="dialog-form">
+      <h2 id="dialog-title"></h2>
+      <div id="dialog-body"></div>
+      <p id="dialog-message" role="status"></p>
+      <div class="buttons">
+        <button type="submit" id="dialog-confirm"></button>
+        <button type="button" id="dialog-close" data-string="ui.dialog.close"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

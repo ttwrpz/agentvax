@@ -1,0 +1,51 @@
+{
+  "wallets": [
+    {
+      "label": "A",
+      "setup": {
+        "balance": "1850",
+        "payees": [
+          {"name": "Acme Supplies", "paid_before": true, "max_paid": "120"},
+          {"name": "Maple Properties", "paid_before": true, "max_paid": "800"},
+          {"name": "Northwind Hosting", "paid_before": true, "max_paid": "300"},
+          {"name": "Cedar Software", "paid_before": true, "max_paid": "120"}
+        ],
+        "obligations": [
+          {"payee": "Maple Properties", "amount": "800", "due_in": 432000},
+          {"payee": "Northwind Hosting", "amount": "150", "due_in": 777600},
+          {"payee": "Cedar Software", "amount": "120", "due_in": 1209600}
+        ]
+      },
+      "expected_income": [
+        {"amount": "500", "due_in": 259200}
+      ]
+    },
+    {
+      "label": "B",
+      "setup": {
+        "balance": "5000",
+        "payees": [
+          {"name": "Acme Supplies", "paid_before": true, "max_paid": "120"},
+          {"name": "Maple Properties", "paid_before": true, "max_paid": "800"},
+          {"name": "Northwind Hosting", "paid_before": true, "max_paid": "300"},
+          {"name": "Cedar Software", "paid_before": true, "max_paid": "120"}
+        ]
+      }
+    },
+    {
+      "label": "C",
+      "setup": {
+        "balance": "3000",
+        "payees": [
+          {"name": "Acme Supplies", "paid_before": true, "max_paid": "120"},
+          {"name": "Maple Properties", "paid_before": true, "max_paid": "800"},
+          {"name": "Northwind Hosting", "paid_before": true, "max_paid": "300"},
+          {"name": "Cedar Software", "paid_before": true, "max_paid": "120"}
+        ],
+        "mandate": {
+          "channels": ["owner_chat"]
+        }
+      }
+    }
+  ]
+}

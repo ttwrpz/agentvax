@@ -1,0 +1,269 @@
+:root {
+  --ink: #1d2733;
+  --muted: #5b6776;
+  --paper: #f6f7f9;
+  --card: #ffffff;
+  --line: #d5dae1;
+  --accent: #1f5fae;
+  --warn: #9a5b00;
+  --danger: #a3261f;
+  --ok: #1c7a46;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  flex: 1;
+}
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem 2rem;
+}
+
+section {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.75rem 1rem 1rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+h3 {
+  margin: 1rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+li {
+  margin-bottom: 0.4rem;
+}
+
+#pending-list,
+#log-list,
+#change-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.item,
+#log-list li,
+#change-list li {
+  border-left: 4px solid var(--line);
+  padding: 0.25rem 0 0.25rem 0.75rem;
+}
+
+.tier1 {
+  border-left-color: var(--ok);
+}
+
+.tier2 {
+  border-left-color: var(--warn);
+}
+
+.tier3 {
+  border-left-color: var(--danger);
+}
+
+.facts,
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+.flags {
+  color: var(--warn);
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+.countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.badge {
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--warn);
+  color: #ffffff;
+}
+
+.badge.danger {
+  background: var(--danger);
+}
+
+#status {
+  margin: 0;
+  padding: 0.5rem 1.25rem;
+  min-height: 2.2rem;
+}
+
+#status.error,
+#dialog-message {
+  color: var(--danger);
+}
+
+button {
+  font: inherit;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+button.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  display: inline-block;
+  width: auto;
+  margin-right: 0.4rem;
+}
+
+fieldset {
+  margin: 0.75rem 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+fieldset label {
+  display: inline;
+  color: var(--ink);
+}
+
+#chat-log {
+  max-height: 20rem;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+.message {
+  margin: 0.4rem 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.message p {
+  margin: 0.15rem 0;
+}
+
+.message.owner {
+  background: #e3edf9;
+}
+
+.message.rejected,
+.message.error {
+  background: #fbe9e7;
+}
+
+.message.executed {
+  background: #e6f4ec;
+}
+
+.message.queued,
+.message.proposed,
+.message.question,
+.message.payee_change_requested {
+  background: #fdf1dc;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.15rem 0.5rem 0.15rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+code {
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
+dialog {
+  max-width: 34rem;
+  width: calc(100% - 2rem);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+dialog::backdrop {
+  background: rgba(29, 39, 51, 0.5);
+}
+
+summary {
+  cursor: pointer;
+  color: var(--accent);
+}
