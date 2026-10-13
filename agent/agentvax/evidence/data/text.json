@@ -1,0 +1,42 @@
+{
+  "title": "# Execution evidence",
+  "intro": [
+    "Every transaction below was sent by `python -m agentvax.evidence.run` on {network} (chain id {chain_id}) and was read back from the chain with a successful receipt before it was written here.",
+    "The contracts were deployed with the {profile} profile, so the delays are short enough to wait for in real time. The L2 delay is {delay} seconds, the pressure hold is {hold} seconds and the loosening delay is {loosening} seconds.",
+    "The token is MockUSD, a test token with no value. Native amounts are valueless test network funds.",
+    "The agent ran with {model}."
+  ],
+  "contracts_heading": "## Contracts",
+  "contracts_columns": ["Contract", "Address"],
+  "rows_heading": "## Evidence rows",
+  "rows_columns": ["Row", "What it shows", "Transactions"],
+  "setup_heading": "## Setup transactions",
+  "setup_intro": "These transactions prepared the wallets. They fund the helper keys, set the mandates of wallets B and C, add payees through the loosening delay and mint test tokens. They are listed so that every transaction of the run can be checked.",
+  "setup_columns": ["Step", "Transactions"],
+  "model_mock": "MockLLM, the deterministic rule-based stand-in for a language model (mode mock). These rows show that the plumbing and the contracts work. They say nothing about model quality",
+  "model_live": "the hosted model {model_name} from provider {provider} (mode live)",
+  "rows": {
+    "E01": "Deployment of the linked libraries, MockUSD, SavingsVault, ThreatBulletin and PolicyWallet A, B and C, with each wallet registered in the bulletin.",
+    "E02": "The mandate of wallet A is set by its owner. The mandate hash is {mandate_hash}.",
+    "E03": "A plain-language payment of {amount} MockUSD to a known payee executes at L1 in one transaction.",
+    "E04": "A schedule of {amount} MockUSD is created at L1, and its first occurrence is run when due with no model and no attestation.",
+    "E05": "The spare money above the reserve and the obligations, {amount} MockUSD, is swept to the savings vault fixed at deployment.",
+    "E06": "The wallet tops up the agent's fee balance with {amount} test ether from its own fee reserve, within the fee budget of the mandate.",
+    "E07": "A payment of {amount} MockUSD is queued at L2, then executed after the L2 delay.",
+    "E08": "A payment of {amount} MockUSD is queued at L2, then cancelled by the owner.",
+    "E09": "A payment of {amount} MockUSD from an invoice with a pressure flag is proposed at L3, approved by the owner, held for the pressure hold and then executed.",
+    "E10": "The worked example on wallet C. The balance is {balance} MockUSD, the reserve is {reserve} and the obligations are {obligations}, so only {discretionary} is spare. A request of {amount} is queued at L2 as tight, decided by the affordability check.",
+    "E11": "Wallet A meets a pressure attack, its owner confirms it and publishes capsule {capsule_id}. A reworded attack on wallet B then matches that capsule and is held at L{tier} instead of executing.",
+    "E12": "Wallet C attests capsule {capsule_id}, so it is confirmed by a second wallet.",
+    "E13": "A document asks wallet B to pay a new address. The agent only records the request. The owner proposes adding the address, then cancels the proposal before the loosening delay ends, so no payee is added.",
+    "E14": "The federated detector model version {version} is anchored in the bulletin with hash {model_hash}, and every guardian runs only this model."
+  },
+  "setup_steps": {
+    "fund": "Native funds for the helper keys and the fee reserve of wallet A",
+    "mandates": "Mandates of wallets B and C",
+    "payees_proposed": "Payees proposed through the loosening delay",
+    "payees_applied": "Payees added after the loosening delay",
+    "tokens": "MockUSD minted to the wallets",
+    "agent_funding": "Native funds for the agent of wallet A after its fee top-up"
+  }
+}
