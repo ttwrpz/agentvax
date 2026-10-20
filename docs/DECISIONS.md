@@ -233,3 +233,10 @@ Known limit: the hosted app takes wallet A's owner key from `OWNER_PRIVATE_KEY`,
 Context: a revision of the wording in `strings.json` broke 11 tests that asserted literal English.
 1. Interface wording is data, revised independently of code (D15, D25.7). Tests assert the template key chosen and the values filled in, and where the sentence matters, that it equals the rendering of that key from `strings.json`. No production code compares interface text.
 2. In the evidence run each mined owner transaction is its own recorded step. E11 is `E11/confirm` then `E11/publish`, so a resume never repeats a mined transaction. The capsule workflow is split into `send_attack_confirmation`, `draft_for`, `publish_draft` and `remember_attack`, and `confirm_attack` is built from them. A state file from before this change could publish a second capsule on resume. None exists, because no test-network run has been made.
+
+### D44. Public RPC state lag after a receipt (20 October 2026)
+The first Base Sepolia evidence deployment returned a successful receipt for AuthorityLogic, but the immediate runtime code check found no code. A later read showed exactly the compiled 8,271 byte runtime. Base serves preconfirmed receipts before its `latest` state reflects them, so a receipt can be visible before the code or state it created.
+1. The deployer retries absent runtime code for at most ten seconds. It still rejects nonempty mismatching code at once and never treats code that stays absent as verified.
+2. On Base Sepolia the chain client returns a receipt only once the canonical head is past the receipt's block and that block's hash and transaction list match the receipt. The wait has a timeout. It does not claim L1 finality. Anvil keeps its immediate mining.
+3. Six regression tests cover delayed code, a nonempty mismatch, permanently absent code, preconfirmed against canonical inclusion, the timeout and local immediate receipts. No contract, tier or delay changed.
+Reference: https://www.base.org/blog/accelerating-base-with-flashblocks

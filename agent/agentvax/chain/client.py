@@ -6,6 +6,7 @@ signing. Holds no key: every transaction is signed by a signer passed in by the 
 
 from __future__ import annotations
 
+import time
 from typing import Any, Protocol
 
 from eth_abi import decode as abi_decode
@@ -14,7 +15,7 @@ from eth_utils import keccak, to_checksum_address
 from web3 import Web3
 from web3.contract import Contract
 from web3.contract.contract import ContractFunction
-from web3.exceptions import ContractLogicError, TimeExhausted
+from web3.exceptions import BlockNotFound, ContractLogicError, TimeExhausted, TransactionNotFound
 from web3.logs import DISCARD
 from web3.types import EventData, TxReceipt
 
@@ -30,6 +31,8 @@ from agentvax.types import (
     Tier,
     WalletView,
 )
+
+BASE_SEPOLIA_CHAIN_ID = 84532
 
 POLICY_WALLET = "src/PolicyWallet.sol:PolicyWallet"
 MOCK_USD = "src/MockUSD.sol:MockUSD"
@@ -244,9 +247,30 @@ class ChainClient:
             )
         except TimeExhausted as exc:
             raise TransactionFailed(hex_hash, "no receipt before the timeout") from exc
+        receipt = self._canonical_receipt(tx_hash, hex_hash, receipt)
         if int(receipt["status"]) != 1:
             raise TransactionFailed(hex_hash, "status 0")
         return receipt
+
+    def _canonical_receipt(self, tx_hash: bytes, hex_hash: str, receipt: TxReceipt) -> TxReceipt:
+        """On Base, wait until the receipt's block is canonical and followed by another block.
+
+        Base serves preconfirmed receipts before ``latest`` state reflects them.
+        """
+        if self._chain_id != BASE_SEPOLIA_CHAIN_ID:
+            return receipt
+        deadline = time.monotonic() + self._tuning.receipt_timeout_seconds
+        while time.monotonic() < deadline:
+            try:
+                current = self._w3.eth.get_transaction_receipt(tx_hash)
+                if self._w3.eth.block_number > int(current["blockNumber"]):
+                    block = self._w3.eth.get_block(current["blockNumber"])
+                    if block["hash"] == current["blockHash"] and tx_hash in block["transactions"]:
+                        return current
+            except (BlockNotFound, TransactionNotFound):
+                pass
+            time.sleep(max(0.5, self._tuning.receipt_poll_seconds))
+        raise TransactionFailed(hex_hash, "receipt did not become canonical before the timeout")
 
     # ------------------------------------------------------------------------------------ events
 

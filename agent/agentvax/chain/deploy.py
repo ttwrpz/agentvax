@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from collections.abc import Sequence
 from typing import Annotated, Any
 
@@ -166,14 +167,24 @@ def _check_runtime_code(
 ) -> None:
     """The code at ``address`` must equal the artifact's linked runtime code, apart from immutable values and,
     for a library, its own address in the call guard."""
-    actual = client.code_at(address)
     expected_hex = link_bytecode(artifact.deployed_bytecode, artifact.deployed_link_references, addresses)
     expected = bytes.fromhex(expected_hex[2:])
+    actual = client.code_at(address)
+    # Public RPC backends may expose the receipt before their latest state reader
+    # sees the new contract. Retry only absent code; never accept differing code.
+    for _ in range(10):
+        if actual:
+            break
+        time.sleep(1)
+        actual = client.code_at(address)
     ranges = [(r.start, r.length) for r in artifact.immutable_references]
     if library:
         ranges.append((1, 20))
     if len(actual) != len(expected) or _mask(actual, ranges) != _mask(expected, ranges):
-        raise DeploymentError(f"code at {address} does not match {artifact.fqn}")
+        raise DeploymentError(
+            f"code at {address} does not match {artifact.fqn} "
+            f"(received {len(actual)} bytes, expected {len(expected)})"
+        )
 
 
 # ---------------------------------------------------------------------------------------------- deploying

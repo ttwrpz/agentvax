@@ -2,7 +2,7 @@
 
 All figures in this document derive from the mock run. That run relies on `MockLLM`, which operates using deterministic rules and phrase tables rather than an underlying language model, running on a local Anvil chain (chain id 31337). This demonstrates that the smart contracts and system plumbing hold, but it provides no evidence regarding language model quality.
 
-Two categories of results remain unmeasured because credentials were not provided. Specifically, the live run requires `LLM_API_KEY` and the model settings in `.env`, whilst the test-network evidence requires `TESTNET_RPC_URL` and `OWNER_PRIVATE_KEY`. Rows dependent on them state "not measured" for that reason.
+Live model quality remains unmeasured because no `LLM_API_KEY` or model settings were provided. The public test network evidence was produced on 20 October 2026. All rows E01 to E14 passed on Base Sepolia (chain id 84532), using MockLLM and valueless test assets. Transaction links and deployed addresses are in `docs/EVIDENCE.md`, and the row to hash mapping is in `evidence/hashes.json`. The evaluation metrics below are the local mock results, not live model measurements.
 
 Sources: `results/summary.mock.json` for the headline figures, `results/eval_ledger.mock.jsonl` for the individual case records used to count the per-family and per-case numbers below, and `results/federation.json`. Metric definitions are set out in decisions D32 to D39 in `docs/DECISIONS.md`. The test suites were written once and were not edited after viewing the initial results.
 
@@ -185,16 +185,16 @@ Gas used per entry point, taken from receipts in the ledger. Entry points with a
 | Metric | Target | Measured | Mode |
 |---|---|---|---|
 | Contract tests passing (`forge test`) | all | 132 passed, 0 failed, in 9 suites | not applicable |
-| Python tests (`pytest agent/tests`) | all | 243 passed, 0 failed | not applicable |
+| Python tests (`pytest agent/tests`) | all | 249 passed, 0 failed | not applicable |
 | PolicyWallet runtime size | at most 24576 bytes | 23812 bytes, 764 bytes of margin | not applicable |
 
-Both counts come from running `make test` on 12 October 2026.
+Both counts come from running `make test` on 20 October 2026, after the six public RPC regression tests of D44 were added. The mock evaluation figures above are from the original mock run.
 
 ## On-chain evidence
 
 | Metric | Target | Measured | Mode |
 |---|---|---|---|
-| Transaction hashes for rows E01 to E14 on a public test network | at least one per row | not measured, no `TESTNET_RPC_URL` or `OWNER_PRIVATE_KEY` was provided | testnet |
+| Transaction hashes for rows E01 to E14 on a public test network | at least one per row | all 14 rows completed on Base Sepolia on 20 October 2026, 43 transactions with successful receipts, see `docs/EVIDENCE.md` and `evidence/hashes.json` | testnet, MockLLM |
 
 The evidence runner includes a local mode (`--local`) that runs the same rows on Anvil. It writes to a separate directory, and its hashes do not count as submission evidence.
 

@@ -1,0 +1,106 @@
+{
+  "chainId": 84532,
+  "profile": "demo",
+  "contracts": {
+    "MockUSD": "0xA9a215236eE1A8Ff57A78ad69301251bd04683C2",
+    "SavingsVault": "0x609A4B6d323f530aC9eda30Fb099f413E015DEF7",
+    "ThreatBulletin": "0x09cc5e634f937a0133dd1D622e21c544e0C5ce73",
+    "PolicyWalletA": "0xc2eb7778dA27150D43A29257a3413C0AB0D708Eb",
+    "PolicyWalletB": "0x61D1756E85a3C862E58397c8B5E3d79aD26Bde59",
+    "PolicyWalletC": "0x55d8755efA0847546575F3879aC71dBDEAcc06FB"
+  },
+  "record": {
+    "chain_id": 84532,
+    "profile": "demo",
+    "deployer": "0x8BabEFBb7D1317570D4b5A66450A8F3538BC62Ab",
+    "registrar": "0x7D3Bb8B7E4E019397fef07C594E74c7C21973e8E",
+    "aggregator": "0x308085FeAbCcEAF16551A5711CdA2C451206f341",
+    "libraries": {
+      "src/lib/AuthorityLogic.sol:AuthorityLogic": {
+        "address": "0x7d473e328334Ee621C2C9dC67956B72090B97c33",
+        "tx_hash": "0x9de4a9d89696875fec570791396fccb005358cf3c6b0cc84c9a3845c2fe5f2f7",
+        "block_number": 48362361
+      },
+      "src/lib/CapsuleLogic.sol:CapsuleLogic": {
+        "address": "0xf4e6A491ff6452F3cFd10148085E45f0Ba669B75",
+        "tx_hash": "0x241488481a3f30f90d503b2347e34571653fbb489568b0d3f72e4600cdcb9ea8",
+        "block_number": 48362365
+      },
+      "src/lib/DecisionLogic.sol:DecisionLogic": {
+        "address": "0x661bED33e5d1BB07ADf8d06936C70DF8A050838B",
+        "tx_hash": "0x02a0dc9fa0f1c749031c780054166371c29c801e15edad09994facc142ae5c6d",
+        "block_number": 48362369
+      },
+      "src/lib/IntentLogic.sol:IntentLogic": {
+        "address": "0x5c46Ef679F0E52D8f03FeDd1cfC4225e23A4eb37",
+        "tx_hash": "0xce4c36bfa38bc8fb7a9afe74a8524a868f3237ea42e4c8837cdc1f120ec4b3ca",
+        "block_number": 48362373
+      },
+      "src/lib/ItemLogic.sol:ItemLogic": {
+        "address": "0x23e4e6795a01659Cf0CBE35520e026b5CC9cbcC3",
+        "tx_hash": "0xd8f431e0e447fd46a345c88085a6a8313b26e95bcbcfbf0d6a09f44c03f20bed",
+        "block_number": 48362377
+      },
+      "src/lib/LedgerLogic.sol:LedgerLogic": {
+        "address": "0x02d626f539e8E945D5C0b9322Ed0f39c25899e4e",
+        "tx_hash": "0x6ba6e0163d9b164c591460e27a278bead61812d6c1bf046c7f1277edec49041b",
+        "block_number": 48362382
+      }
+    },
+    "mock_usd": {
+      "address": "0xA9a215236eE1A8Ff57A78ad69301251bd04683C2",
+      "tx_hash": "0x6ccbfcac96e00a95722175e9edc85b379be73287dbf4bf21780d585b995271a4",
+      "block_number": 48362386
+    },
+    "savings_vault": {
+      "address": "0x609A4B6d323f530aC9eda30Fb099f413E015DEF7",
+      "tx_hash": "0x1d8f818021cd231f015ff77931536f669513e3f001733190fa7890c864b6a899",
+      "block_number": 48362390
+    },
+    "threat_bulletin": {
+      "address": "0x09cc5e634f937a0133dd1D622e21c544e0C5ce73",
+      "tx_hash": "0xf6d7cd1668b4d4ef71c280ea87b21d2a4f599644620be61ff1b3888e51608dd1",
+      "block_number": 48362394
+    },
+    "wallets": [
+      {
+        "label": "A",
+        "address": "0xc2eb7778dA27150D43A29257a3413C0AB0D708Eb",
+        "tx_hash": "0x09d49a0a63b6f1b47e4fafd4b737ed764b8a79d4e92b858962253dddd1955761",
+        "block_number": 48362398,
+        "owner": "0x8BabEFBb7D1317570D4b5A66450A8F3538BC62Ab",
+        "agent": "0xB2e8C2D584ee35Bd37b470EB602557B00F6F0186",
+        "guardian": "0x2ae4eb6fC70c814a30cA52dACdD88877d1d8D76B",
+        "registration_tx_hash": "0x399672446a83bbdee86b2ebd9aa143cfe61a03bbb9ca9ab38aa87d38ebdc6d64"
+      },
+      {
+        "label": "B",
+        "address": "0x61D1756E85a3C862E58397c8B5E3d79aD26Bde59",
+        "tx_hash": "0x021d1b7f46eb40861e8ef3dde14be287fa85aa196902db260d4d1bd63a6a8727",
+        "block_number": 48362407,
+        "owner": "0x6b86759fe50170E8f8f2ce9bf3d5427E8a259755",
+        "agent": "0xbB9C62Ed86201400A988a7bE3694f5c9a3D21A40",
+        "guardian": "0xfe80c012c53B699c3215EE25c54D9Dc48Ad87d42",
+        "registration_tx_hash": "0xa6c734c1bbcd53004f8747e21862aee221d73be387b12795db1f7c0869f24df7"
+      },
+      {
+        "label": "C",
+        "address": "0x55d8755efA0847546575F3879aC71dBDEAcc06FB",
+        "tx_hash": "0x480fdcaa1b3aae4f1d9d7733a9090251055c2679004c217cc4bb4190952930a7",
+        "block_number": 48362416,
+        "owner": "0x7B90De3e6789d05B3e3ba1ee4Ed1393c98642723",
+        "agent": "0x3E12d0a97FbBcB866cC85C0a9A37D980163FE024",
+        "guardian": "0xD1124c6A804FE7c5524D791eea42fbc0875116B9",
+        "registration_tx_hash": "0xa74013fecaf84dc234cdc22a005a67f6ef5f3dccfa51ebc09d9622a503c3b1a4"
+      }
+    ]
+  },
+  "evidence": {
+    "agentModel": "mock",
+    "delays": {
+      "delay": 60,
+      "pressureHold": 120,
+      "looseningDelay": 300
+    }
+  }
+}
