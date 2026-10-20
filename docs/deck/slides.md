@@ -112,7 +112,7 @@ Mock results test the system plumbing and the contracts, but they say nothing ab
 - Four contracts, with the wallet split into six linked libraries, alongside a separate guardian process and a Python runtime with a reader, planner, validator and explainer.
 - Contract tests include a fuzzed invariant that the agent cannot exceed its mandate, alongside Python tests run with no network.
 - An evaluation of 40 tasks, 10 ambiguous cases, 20 affordability cases and 30 base attacks across 5 families, each reworded twice.
-- `make test` runs every contract and Python test. Evidence from a public test network was not measured, as no test-network credentials were provided.
+- `make test` runs every contract and Python test. All 14 evidence rows ran on Base Sepolia, 43 transactions with successful receipts, listed in `docs/EVIDENCE.md`.
 
 ---
 

@@ -95,6 +95,7 @@ All results reported below come from the evaluation suites in `agent/agentvax/ev
 | Unauthorised transactions, all attack suites | mock | 0 |
 | Value beyond L1 | mock | 0 |
 | Same suites with the hosted model | live | Not measured, as no `LLM_API_KEY` was provided |
+| Evidence rows E01 to E14 on Base Sepolia | testnet, MockLLM | All 14 rows completed with successful receipts, see `docs/EVIDENCE.md` |
 
 The mock evaluation demonstrates that the underlying contract wiring and safety plumbing function as designed, though it cannot assess model quality. The initial mock run uncovered four hard-gate failures. Each failure was traced to either an issue in the test harness or a rule that guessed rather than evaluating deterministically. None of these was resolved by altering a test suite, and the complete diagnosis is set out in decision D35.
 
